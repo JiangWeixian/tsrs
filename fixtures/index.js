@@ -1,5 +1,3 @@
-import path from 'path'
-
 console.log('assets')
 
 const a = 1
