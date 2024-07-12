@@ -1,5 +1,11 @@
 {
   "editor.formatOnSave": true,
+  "[jsonc]": {
+    "editor.formatOnSave": false
+  },
+  "[json]": {
+    "editor.formatOnSave": false
+  },
   "workbench.colorCustomizations": {
     "activityBar.activeBackground": "#2f7c47",
     "activityBar.background": "#2f7c47",
