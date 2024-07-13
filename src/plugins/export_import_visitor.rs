@@ -1,7 +1,8 @@
 use swc_core::ecma::ast::{self, ImportPhase};
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
-use crate::utils::{ExportSpecifier, ImportSpecifier, ImportType, SHARED_IMPORTS};
+use crate::compiler::ModuleGraph;
+use crate::utils::{ExportSpecifier, ImportSpecifier, ImportType};
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -18,19 +19,23 @@ lazy_static! {
 }
 
 pub struct ImportExportVisitor<'a> {
-    pub imports: &'a mut Vec<ImportSpecifier>,
+    pub context: String,
+    pub imports: Vec<ImportSpecifier>,
+    pub module_graph: &'a mut ModuleGraph,
     pub exports: Vec<ExportSpecifier>,
     pub facade: bool,
     pub has_module_syntax: bool,
 }
 
 impl<'a> ImportExportVisitor<'a> {
-    pub fn new(collected_imports: &'a mut Vec<ImportSpecifier>) -> Self {
+    pub fn new(module_graph: &'a mut ModuleGraph, context: String) -> Self {
         Self {
-            imports: collected_imports,
+            imports: vec![],
             exports: vec![],
             facade: false,
             has_module_syntax: false,
+            module_graph,
+            context,
         }
     }
 }
@@ -40,7 +45,10 @@ impl<'a> ImportExportVisitor<'a> {
     fn add_import(&mut self, import: ImportSpecifier) {
         // let mut global_imports = SHARED_IMPORTS.lock().unwrap();
         // global_imports.push(import.clone());
+        let specifier = import.n.clone();
         self.imports.push(import);
+        self.module_graph
+            .add_module(specifier, self.context.clone())
     }
 
     fn parse_import(&mut self, import: &ast::ImportDecl) {

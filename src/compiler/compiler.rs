@@ -14,21 +14,28 @@ use anyhow::{anyhow, bail, Context, Error};
 use base64::prelude::*;
 use dashmap::DashMap;
 use jsonc_parser::parse_to_serde_value;
+use miette::IntoDiagnostic;
 use serde_json::error::Category;
 use swc_config::config_types::BoolOr;
 use swc_config::merge::Merge;
+use swc_core::atoms::Atom;
 use swc_core::base::config::{
-    BuiltInput, Config, ConfigFile, InputSourceMap, IsModule, JsMinifyCommentOption, Rc, RootMode,
+    BuiltInput, Config, ConfigFile, InputSourceMap, IsModule, JsMinifyCommentOption,
+    JsMinifyFormatOptions, Rc, RootMode,
 };
-use swc_core::base::{sourcemap, SwcComments};
+use swc_core::base::{sourcemap, SwcComments, TransformOutput};
+use swc_core::common::collections::AHashMap;
 use swc_core::common::comments::{Comment, CommentKind, Comments};
 use swc_core::common::errors::{Handler, HANDLER};
+use swc_core::common::source_map::SourceMapGenConfig;
 use swc_core::common::sync::Lazy;
 use swc_core::common::{
     comments::SingleThreadedComments, FileName, FilePathMapping, Mark, SourceMap, GLOBALS,
 };
 use swc_core::common::{BytePos, SourceFile};
 use swc_core::ecma::ast::{EsVersion, Program};
+use swc_core::ecma::codegen::text_writer::WriteJs;
+use swc_core::ecma::codegen::{text_writer, Config as CodegenConfig, Emitter, Node};
 use swc_core::ecma::parser::{
     parse_file_as_module, parse_file_as_program, parse_file_as_script, Syntax,
 };
@@ -240,6 +247,39 @@ fn read_config(opts: &Options, name: &FileName) -> Result<Option<Config>, Error>
 
     res.with_context(|| format!("failed to read .swcrc file for input file at `{}`", name))
 }
+
+#[derive(Default, Clone, Debug)]
+pub struct SourceMapConfig {
+    pub enable: bool,
+    pub inline_sources_content: bool,
+    pub emit_columns: bool,
+    pub names: AHashMap<BytePos, Atom>,
+}
+
+impl SourceMapGenConfig for SourceMapConfig {
+    fn file_name_to_source(&self, f: &FileName) -> String {
+        let f = f.to_string();
+        if f.starts_with('<') && f.ends_with('>') {
+            f[1..f.len() - 1].to_string()
+        } else {
+            f
+        }
+    }
+
+    fn inline_sources_content(&self, _: &FileName) -> bool {
+        self.inline_sources_content
+    }
+
+    fn emit_columns(&self, _f: &FileName) -> bool {
+        self.emit_columns
+    }
+
+    fn name_for_bytepos(&self, pos: BytePos) -> Option<&str> {
+        self.names.get(&pos).map(|v| &**v)
+    }
+}
+
+pub type Result<T, E = miette::Error> = std::result::Result<T, E>;
 
 pub struct SwcCompiler {
     cm: Arc<SourceMap>,
@@ -572,6 +612,72 @@ impl SwcCompiler {
 
     pub fn cm(&self) -> &Arc<SourceMap> {
         &self.cm
+    }
+    pub fn print(
+        &self,
+        node: &Program,
+        source_map: Arc<SourceMap>,
+        target: EsVersion,
+        source_map_config: SourceMapConfig,
+        input_source_map: Option<&sourcemap::SourceMap>,
+        minify: bool,
+        comments: Option<&dyn Comments>,
+        format: &JsMinifyFormatOptions,
+    ) -> Result<TransformOutput> {
+        let mut src_map_buf = vec![];
+
+        let src = {
+            let mut buf = vec![];
+            {
+                let mut wr = Box::new(text_writer::JsWriter::new(
+                    source_map.clone(),
+                    "\n",
+                    &mut buf,
+                    source_map_config.enable.then_some(&mut src_map_buf),
+                )) as Box<dyn WriteJs>;
+
+                if minify {
+                    wr = Box::new(text_writer::omit_trailing_semi(wr));
+                }
+
+                let mut emitter = Emitter {
+                    cfg: CodegenConfig::default()
+                        .with_minify(minify)
+                        .with_target(target)
+                        .with_ascii_only(format.ascii_only)
+                        .with_inline_script(format.inline_script),
+                    comments,
+                    cm: source_map.clone(),
+                    wr,
+                };
+
+                node.emit_with(&mut emitter).into_diagnostic()?;
+            }
+            // SAFETY: SWC will emit valid utf8 for sure
+            unsafe { String::from_utf8_unchecked(buf) }
+        };
+
+        let map = if source_map_config.enable {
+            let mut buf = vec![];
+
+            source_map
+                .build_source_map_with_config(
+                    &src_map_buf,
+                    input_source_map.cloned(),
+                    source_map_config,
+                )
+                .to_writer(&mut buf)
+                .unwrap_or_else(|e| panic!("{}", e.to_string()));
+            // SAFETY: This buffer is already sanitized
+            Some(unsafe { String::from_utf8_unchecked(buf) })
+        } else {
+            None
+        };
+        Ok(TransformOutput {
+            code: src,
+            map,
+            output: None,
+        })
     }
 }
 trait IntoSwcComments {
