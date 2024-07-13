@@ -9,7 +9,7 @@ use resolver::resolve;
 
 fn main() {
     let mut mg = ModuleGraph::default();
-    compile("./fixtures/index.ts", &mut mg);
+    compile("./fixtures/package-a/index.ts", &mut mg);
     let paths_to_compile: Vec<_> = mg
         .modules
         .iter()
