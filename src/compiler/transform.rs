@@ -4,7 +4,8 @@ use std::sync::Arc;
 
 use super::{ModuleGraph, SwcCompiler};
 use crate::plugins::{DemoVisitor, ImportExportVisitor};
-use swc_core::base::config::{Config, JsMinifyFormatOptions, ModuleConfig, Options};
+use indexmap::IndexMap;
+use swc_core::base::config::{Config, JsMinifyFormatOptions, JscConfig, ModuleConfig, Options};
 use swc_core::common::{chain, comments::Comments, Mark, SourceMap};
 use swc_core::ecma::{
     ast::EsVersion,
@@ -24,7 +25,7 @@ pub fn transform<'a>(
 ) -> impl Fold + 'a {
     let export_import_visitor = ImportExportVisitor::new(module_graph, context);
     let ch = chain!(
-        as_folder(DemoVisitor::default()),
+        // as_folder(DemoVisitor::default()),
         as_folder(export_import_visitor),
         noop()
     );
@@ -33,10 +34,21 @@ pub fn transform<'a>(
 
 #[allow(clippy::too_many_arguments)]
 pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) {
+    // TODO: parse from tsconfig.json
+    let mut paths = IndexMap::default();
+    paths.insert(
+        "@demo/package-b".into(),
+        vec!["../package-b/src/index.ts".into()],
+    );
     // NOTE: define swc config here
     let options = Options {
         config: Config {
             module: Some(ModuleConfig::CommonJs(Default::default())),
+            jsc: JscConfig {
+                base_url: Path::new("./").canonicalize().unwrap(),
+                paths,
+                ..Default::default()
+            },
             ..Default::default()
         },
         ..Default::default()
@@ -85,5 +97,5 @@ pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) {
         None,
         &format_opt,
     );
-    println!("output {:?}", output)
+    // println!("output {:?}", output)
 }

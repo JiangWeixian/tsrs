@@ -1,2 +1,2 @@
 mod resolve;
-pub use resolve::resolve;
+pub use resolve::Resolver;

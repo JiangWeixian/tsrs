@@ -33,3 +33,5 @@ lazy_static = { version = "1.5.0" }
 once_cell = { version = "1.19.0" }
 oxc_resolver = { version = "1.9.3" }
 miette = { version = "7.2.0" }
+glob = { version = "0.3.1" }
+indexmap = { version = "2.2.6" }

@@ -1,12 +1,18 @@
-#[derive(Default, Clone)]
+#[derive(Default, Clone, Debug)]
 pub struct Module {
     pub specifier: String,
     pub context: String,
     pub used: bool,
-    pub real_path: String,
+    pub file_path: String,
 }
 
-#[derive(Default)]
+impl Module {
+    pub fn set_file_path(&mut self, file_path: &str) {
+        self.file_path = file_path.into();
+    }
+}
+
+#[derive(Default, Debug, Clone)]
 pub struct ModuleGraph {
     pub modules: Vec<Module>,
 }
@@ -23,5 +29,17 @@ impl ModuleGraph {
             context: context.into(),
             ..Default::default()
         })
+    }
+    pub fn get_unused_modules(&mut self) -> impl Iterator<Item = &mut Module> {
+        self.modules.iter_mut().filter(|module| !module.used)
+    }
+    pub fn get_unused_modules_size(&self) -> usize {
+        let modules: Vec<Module> = self
+            .modules
+            .clone()
+            .into_iter()
+            .filter(|f| !f.used)
+            .collect();
+        modules.len()
     }
 }
