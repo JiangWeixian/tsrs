@@ -111,9 +111,13 @@ impl<'a> ImportExportVisitor<'a> {
                         n: Some(name),
                         t: t.unwrap(),
                     });
-                    if let Some(m) = m {
-                        import.src.value = m.relative_path.into();
+                    if let Some(v) = m.and_then(|f| f.with_ext()) {
+                        import.src = Box::new(ast::Str::from(v));
+                        println!("new src {:?}", import.src.value);
                     }
+                    // if let Some(v) = m {
+                    //     import.src.value = v.relative_path.into();
+                    // }
                 }
             }
         }

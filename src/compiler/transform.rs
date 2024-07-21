@@ -36,16 +36,16 @@ pub fn transform<'a>(
 pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) {
     // TODO: parse from tsconfig.json
     let mut paths = IndexMap::default();
-    paths.insert(
-        "@demo/package-b".into(),
-        vec!["../package-b/src/index.ts".into()],
-    );
+    // paths.insert(
+    //     "@demo/package-b".into(),
+    //     vec!["../package-b/src/index.ts".into()],
+    // );
     // NOTE: define swc config here
     let options = Options {
         config: Config {
-            module: Some(ModuleConfig::CommonJs(Default::default())),
+            module: Some(ModuleConfig::Es6(Default::default())),
             jsc: JscConfig {
-                base_url: Path::new("./").canonicalize().unwrap(),
+                // base_url: Path::new("./").canonicalize().unwrap(),
                 paths,
                 ..Default::default()
             },
@@ -90,7 +90,7 @@ pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) {
     let output = c.print(
         &program,
         c.cm().clone(),
-        EsVersion::Es5,
+        EsVersion::Es2022,
         super::compiler::SourceMapConfig::default(),
         None,
         false,

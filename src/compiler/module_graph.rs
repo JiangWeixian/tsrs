@@ -1,3 +1,7 @@
+use std::path::PathBuf;
+
+use sugar_path::SugarPath;
+
 use crate::resolver::Resolver;
 
 #[derive(Default, Clone, Debug)]
@@ -11,8 +15,14 @@ pub struct Module {
 }
 
 impl Module {
-    pub fn set_abs_path(&mut self, abs_path: &str) {
-        self.abs_path = abs_path.into();
+    // TODO: support custom ext
+    pub fn with_ext(&self) -> Option<String> {
+        let path = self
+            .relative_path
+            .as_path()
+            .with_extension("")
+            .with_extension("js");
+        path.to_str().map(|f| f.to_string())
     }
 }
 

@@ -14,6 +14,7 @@ fn main() {
     for entry in files {
         match entry {
             Ok(path) => {
+                println!("compile! {:?}", path.to_str().unwrap());
                 compile(path.to_str().unwrap(), &mut mg);
             }
             Err(e) => println!("{:?}", e),
