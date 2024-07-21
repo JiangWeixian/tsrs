@@ -1,7 +1,7 @@
 use swc_core::ecma::ast::{self, ImportPhase};
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
-use crate::compiler::ModuleGraph;
+use crate::compiler::{Module, ModuleGraph};
 use crate::utils::{ExportSpecifier, ImportSpecifier, ImportType};
 use lazy_static::lazy_static;
 
@@ -42,16 +42,18 @@ impl<'a> ImportExportVisitor<'a> {
 
 // import
 impl<'a> ImportExportVisitor<'a> {
-    fn add_import(&mut self, import: ImportSpecifier) {
+    fn add_import(&mut self, import: ImportSpecifier) -> Option<Module> {
         // let mut global_imports = SHARED_IMPORTS.lock().unwrap();
         // global_imports.push(import.clone());
         let specifier = import.n.clone();
         self.imports.push(import);
-        self.module_graph
-            .add_module(specifier, self.context.clone())
+        let m = self
+            .module_graph
+            .resolve_module(specifier, self.context.clone());
+        m
     }
 
-    fn parse_import(&mut self, import: &ast::ImportDecl) {
+    fn parse_import(&mut self, import: &mut ast::ImportDecl) {
         // import type { a } from 'b'
         // import a, { type b } from 'b'
         if import.type_only {
@@ -105,10 +107,13 @@ impl<'a> ImportExportVisitor<'a> {
                 }
 
                 if t.is_some() {
-                    self.add_import(ImportSpecifier {
+                    let m = self.add_import(ImportSpecifier {
                         n: Some(name),
                         t: t.unwrap(),
-                    })
+                    });
+                    if let Some(m) = m {
+                        import.src.value = m.relative_path.into();
+                    }
                 }
             }
         }
@@ -490,7 +495,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
                         self.add_import(ImportSpecifier {
                             n: Some(name),
                             t: ImportType::Static,
-                        })
+                        });
                     }
                 }
             }

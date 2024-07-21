@@ -1,34 +1,57 @@
+use crate::resolver::Resolver;
+
 #[derive(Default, Clone, Debug)]
 pub struct Module {
     pub specifier: String,
     pub context: String,
     pub used: bool,
-    pub file_path: String,
+    pub built_in: bool,
+    pub abs_path: String,
+    pub relative_path: String,
 }
 
 impl Module {
-    pub fn set_file_path(&mut self, file_path: &str) {
-        self.file_path = file_path.into();
+    pub fn set_abs_path(&mut self, abs_path: &str) {
+        self.abs_path = abs_path.into();
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug)]
 pub struct ModuleGraph {
     pub modules: Vec<Module>,
+    pub resolver: Resolver,
 }
 
 impl ModuleGraph {
-    fn new() -> ModuleGraph {
+    pub fn new(resolver: Resolver) -> ModuleGraph {
         Self {
             modules: Default::default(),
+            resolver,
         }
     }
-    pub fn add_module(&mut self, specifier: Option<String>, context: String) {
-        self.modules.push(Module {
-            specifier: specifier.unwrap_or_default(),
-            context: context.into(),
-            ..Default::default()
-        })
+    pub fn add_module(&mut self, module: Module) {
+        self.modules.push(module);
+    }
+    pub fn resolve_module(&mut self, specifier: Option<String>, context: String) -> Option<Module> {
+        if let Some(sp) = specifier {
+            let module = match self.resolver.resolve(&sp, &context) {
+                Some(resolved) => {
+                    let m = Module {
+                        specifier: sp,
+                        context,
+                        abs_path: resolved.abs_path.unwrap_or_default(),
+                        relative_path: resolved.relative_path.unwrap_or_default(),
+                        ..Default::default()
+                    };
+                    self.add_module(m.clone());
+                    Some(m)
+                }
+                None => None,
+            };
+            module
+        } else {
+            None
+        }
     }
     pub fn get_unused_modules(&mut self) -> impl Iterator<Item = &mut Module> {
         self.modules.iter_mut().filter(|module| !module.used)

@@ -97,5 +97,5 @@ pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) {
         None,
         &format_opt,
     );
-    // println!("output {:?}", output)
+    println!("output {:?}", output)
 }
