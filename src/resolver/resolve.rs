@@ -20,7 +20,9 @@ fn find_up_dir(context: PathBuf) -> Option<String> {
 
 pub struct ResolvedSpecifier {
     pub abs_path: Option<String>,
+    // TODO: remove this one
     pub relative_path: Option<String>,
+    pub context: Option<String>,
     pub built_in: bool,
 }
 
@@ -42,8 +44,10 @@ impl Resolver {
             return None;
         }
 
-        let path = path_str.unwrap();
+        let path = path_str.clone().unwrap();
         let path = path.as_path();
+
+        println!("resolve {:?} {:?}", specifier, path_str);
 
         assert!(
             path.is_dir(),
@@ -62,6 +66,7 @@ impl Resolver {
                         return Some(ResolvedSpecifier {
                             abs_path: Some(spec),
                             relative_path: None,
+                            context: None,
                             built_in,
                         });
                     }
@@ -85,7 +90,6 @@ impl Resolver {
                     Some(specifier.to_string())
                 } else {
                     let relative_path = resolved_path.as_path().relative(path);
-                    println!("relative_path {:?} {:?}", relative_path, path);
                     relative_path.to_str().map(|f| f.to_string())
                 }
             }
@@ -94,6 +98,7 @@ impl Resolver {
         Some(ResolvedSpecifier {
             abs_path: resolved_path,
             relative_path,
+            context: path_str,
             built_in,
         })
     }

@@ -6,6 +6,7 @@ use super::{ModuleGraph, SwcCompiler};
 use crate::plugins::{DemoVisitor, ImportExportVisitor};
 use indexmap::IndexMap;
 use swc_core::base::config::{Config, JsMinifyFormatOptions, JscConfig, ModuleConfig, Options};
+use swc_core::base::TransformOutput;
 use swc_core::common::{chain, comments::Comments, Mark, SourceMap};
 use swc_core::ecma::{
     ast::EsVersion,
@@ -33,7 +34,7 @@ pub fn transform<'a>(
 }
 
 #[allow(clippy::too_many_arguments)]
-pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) {
+pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) -> TransformOutput {
     // TODO: parse from tsconfig.json
     let mut paths = IndexMap::default();
     // paths.insert(
@@ -97,5 +98,6 @@ pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) {
         None,
         &format_opt,
     );
-    println!("output {:?}", output)
+    // println!("output {:?}", output);
+    output.unwrap()
 }
