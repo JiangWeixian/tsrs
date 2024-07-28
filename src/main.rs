@@ -66,6 +66,7 @@ fn main() {
         for (resolved_path, output_path) in paths_to_compile {
             let resource_path = resolved_path.as_path().absolutize();
             let resource_path_str = resource_path.to_str().unwrap();
+            println!("output {}", output_path);
             let result: swc_core::base::TransformOutput = compile(&resolved_path, &mut mg);
             assets.output(&output_path, result)
         }

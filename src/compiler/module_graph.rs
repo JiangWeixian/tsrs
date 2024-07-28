@@ -48,7 +48,7 @@ impl Module {
     // TODO: support custom ext
     pub fn with_ext(&self) -> Option<String> {
         let path = self
-            .relative_path
+            .v_relative_path
             .as_path()
             .with_extension("")
             .with_extension("js");
