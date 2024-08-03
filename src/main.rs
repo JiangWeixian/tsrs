@@ -20,7 +20,7 @@ fn main() {
             .unwrap(),
     );
     // TODO: ensure input and output
-    let output_options = ConfigOptions {
+    let config_options = ConfigOptions {
         output: String::from(
             "./fixtures/package-a/dist"
                 .as_path()
@@ -28,12 +28,20 @@ fn main() {
                 .to_str()
                 .unwrap(),
         ),
+        root: "./fixtures/package-a/".as_path().absolutize(),
         input: input.clone(),
     };
-    let mut config = Config::new(output_options);
+    let mut config = Config::new(config_options);
+    config.parse_tsconfig(
+        "./fixtures/package-a/tsconfig.json"
+            .as_path()
+            .absolutize()
+            .as_path(),
+    );
     config.search_files();
     let inputs = config.inputs.clone();
     let mut mg = ModuleGraph::new(resolver, config);
+    println!("inputs {:?}", inputs);
     for path in inputs {
         let resource_path = path.as_path().absolutize();
         mg.resolve_entry_module(Some(resource_path.to_str().unwrap_or_default().to_string()));
