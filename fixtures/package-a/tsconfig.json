@@ -14,7 +14,7 @@
     "noUnusedLocals": true,
     "declaration": true,
     "importHelpers": false,
-    "outDir": "dist",
+    "outDir": "lib",
     "sourceMap": false,
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,

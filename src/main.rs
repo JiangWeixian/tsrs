@@ -21,18 +21,12 @@ fn main() {
     );
     // TODO: ensure input and output
     let config_options = ConfigOptions {
-        output: String::from(
-            "./fixtures/package-a/dist"
-                .as_path()
-                .absolutize()
-                .to_str()
-                .unwrap(),
-        ),
         root: "./fixtures/package-a/".as_path().absolutize(),
         input: input.clone(),
+        ..Default::default()
     };
     let mut config = Config::new(config_options);
-    config.parse_tsconfig(
+    config.resolve_options(
         "./fixtures/package-a/tsconfig.json"
             .as_path()
             .absolutize()

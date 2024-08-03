@@ -1,7 +1,4 @@
-use std::{
-    fs::{create_dir_all, write},
-    path::Path,
-};
+use std::fs::{create_dir_all, write};
 
 use sugar_path::SugarPath;
 use swc_core::base::TransformOutput;

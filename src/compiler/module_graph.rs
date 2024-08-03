@@ -96,8 +96,10 @@ impl ModuleGraph {
                 let path = sp.as_path().absolutize();
                 path.to_str().unwrap_or_default().to_string()
             };
-            let v_abs_path =
-                abs_path.replace(&self.config.options.input, &self.config.options.output);
+            let v_abs_path = abs_path.replace(
+                &self.config.resolved_options.input,
+                &self.config.resolved_options.output.to_str().unwrap(),
+            );
             let m = Module {
                 specifier: sp,
                 v_abs_path: String::from(v_abs_path),
@@ -119,8 +121,8 @@ impl ModuleGraph {
                     let v_abs_path = abs_path.as_ref().and_then(|f| {
                         Some(replace_common_prefix(
                             f.as_path(),
-                            &self.config.options.input.as_path(),
-                            &self.config.options.output.as_path(),
+                            &self.config.resolved_options.input.as_path(),
+                            &self.config.resolved_options.output.as_path(),
                         ))
                     });
                     let relative_path = resolved.relative_path;
@@ -128,8 +130,8 @@ impl ModuleGraph {
                     let v_context = context.clone().and_then(|f| {
                         Some(replace_common_prefix(
                             &f.as_path(),
-                            &self.config.options.input.as_path(),
-                            &self.config.options.output.as_path(),
+                            &self.config.resolved_options.input.as_path(),
+                            &self.config.resolved_options.output.as_path(),
                         ))
                     });
                     let v_relative_path = v_abs_path.as_ref().and_then(|f| {
