@@ -23,6 +23,7 @@ pub struct ResolvedSpecifier {
     // TODO: remove this one
     pub relative_path: Option<String>,
     pub context: Option<String>,
+    pub is_node_modules: bool,
     pub built_in: bool,
 }
 
@@ -30,12 +31,17 @@ impl Resolver {
     pub fn new() -> Resolver {
         let resolved_options = ResolveOptions {
             extensions: vec![".js".into(), ".ts".into()],
-            extension_alias: vec![(".js".into(), vec![".ts".into()])],
             builtin_modules: true,
             ..ResolveOptions::default()
         };
         let resolver = OxcResolver::new(resolved_options);
         Self { resolver }
+    }
+    pub fn is_node_modules(&self, file_path: &Option<String>) -> bool {
+        match file_path {
+            None => false,
+            Some(path) => path.contains("node_modules"),
+        }
     }
     pub fn resolve(&self, specifier: &str, context: &str) -> Option<ResolvedSpecifier> {
         let path_str = find_up_dir(PathBuf::from(context));
@@ -68,6 +74,7 @@ impl Resolver {
                             relative_path: None,
                             context: None,
                             built_in,
+                            is_node_modules: false,
                         });
                     }
                     _ => {
@@ -96,6 +103,7 @@ impl Resolver {
             None => None,
         };
         Some(ResolvedSpecifier {
+            is_node_modules: self.is_node_modules(&resolved_path),
             abs_path: resolved_path,
             relative_path,
             context: path_str,

@@ -11,8 +11,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "build:tsc": "rm -rf ./dist && tsc"
   },
-  "devDependencies": {
+  "dependencies": {
     "@demo/package-b": "workspace:*",
+    "functional-md": "1.1.0"
+  },
+  "devDependencies": {
     "typescript": "^5"
   }
 }

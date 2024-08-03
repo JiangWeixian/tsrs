@@ -4,8 +4,6 @@ mod plugins;
 mod resolver;
 mod utils;
 
-use glob::glob;
-
 use compiler::{compile, Assets, ModuleGraph};
 use config::{Config, ConfigOptions};
 use resolver::Resolver;
@@ -32,23 +30,14 @@ fn main() {
         ),
         input: input.clone(),
     };
-    let config = Config::new(output_options);
+    let mut config = Config::new(output_options);
+    config.search_files();
+    let inputs = config.inputs.clone();
     let mut mg = ModuleGraph::new(resolver, config);
-    let files = glob("./fixtures/package-a/src/*.ts").expect("Failed to read glob pattern");
-    for entry in files {
-        match entry {
-            Ok(path) => {
-                // println!("compile! {:?}", path.to_str().unwrap());
-                let resource_path = path.as_path().absolutize();
-                mg.resolve_entry_module(Some(
-                    resource_path.to_str().unwrap_or_default().to_string(),
-                ));
-                let resource_path_str = resource_path.to_str().unwrap();
-                // let result = compile(resource_path_str, &mut mg);
-                // output.output(resource_path_str, result);
-            }
-            Err(e) => println!("{:?}", e),
-        }
+    for path in inputs {
+        let resource_path = path.as_path().absolutize();
+        mg.resolve_entry_module(Some(resource_path.to_str().unwrap_or_default().to_string()));
+        let resource_path_str = resource_path.to_str().unwrap();
     }
     while mg.get_unused_modules_size() != 0 {
         let paths_to_compile: Vec<_> = mg
@@ -67,7 +56,7 @@ fn main() {
             let resource_path = resolved_path.as_path().absolutize();
             let resource_path_str = resource_path.to_str().unwrap();
             println!("output {}", output_path);
-            let result: swc_core::base::TransformOutput = compile(&resolved_path, &mut mg);
+            let result = compile(&resolved_path, &mut mg);
             assets.output(&output_path, result)
         }
     }

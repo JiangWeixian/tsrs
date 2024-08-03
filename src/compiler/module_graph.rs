@@ -33,20 +33,34 @@ fn replace_common_prefix(p1: &Path, p2: &Path, new_prefix: &Path) -> String {
 
 #[derive(Default, Clone, Debug)]
 pub struct Module {
+    /// The imported named of the module
     pub specifier: String,
+    /// The dir of current importee file
     pub context: String,
+    /// is current module is compiled
     pub used: bool,
+    /// Builtin node native modules
     pub built_in: bool,
+    /// imported from node_modules
+    pub is_node_modules: bool,
+    /// input files from options.include
     pub is_entry: bool,
+    /// Resolved absolute filepath of specifier
     pub abs_path: String,
+    /// Relative path relative to abs_path
     pub relative_path: String,
+    /// Virtual absolute filepath, rewrite abs_path based on output.dir
     pub v_abs_path: String,
+    /// Relative path relative to v_abs_path
     pub v_relative_path: String,
 }
 
 impl Module {
     // TODO: support custom ext
     pub fn with_ext(&self) -> Option<String> {
+        if self.built_in || self.is_node_modules {
+            return Some(self.specifier.clone());
+        }
         let path = self
             .v_relative_path
             .as_path()
@@ -141,6 +155,9 @@ impl ModuleGraph {
                         v_abs_path: v_abs_path.unwrap_or_default(),
                         relative_path: relative_path.unwrap_or_default(),
                         v_relative_path: v_relative_path.unwrap_or_default(),
+                        used: resolved.built_in || resolved.is_node_modules,
+                        is_node_modules: resolved.is_node_modules,
+                        built_in: resolved.built_in,
                         ..Default::default()
                     };
                     // TODO: fix unwrap
