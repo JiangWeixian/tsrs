@@ -1,6 +1,7 @@
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
+use log::debug;
 use sugar_path::SugarPath;
 
 use crate::config::Config;
@@ -146,7 +147,8 @@ impl ModuleGraph {
                             }
                         })
                     });
-                    println!(
+                    debug!(
+                        target: "tswc",
                         "relative_path {:?} v_relative_path {:?} abs_path {:?} v_abs_path {:?} context {:?}",
                         relative_path, v_relative_path, abs_path, v_abs_path, v_context
                     );

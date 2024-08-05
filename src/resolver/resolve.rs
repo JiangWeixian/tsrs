@@ -1,5 +1,6 @@
 use std::path::PathBuf;
 
+use log::debug;
 use oxc_resolver::{ResolveError, ResolveOptions, Resolver as OxcResolver};
 use sugar_path::SugarPath;
 
@@ -53,7 +54,7 @@ impl Resolver {
         let path = path_str.clone().unwrap();
         let path = path.as_path();
 
-        println!("resolve {:?} {:?}", specifier, path_str);
+        debug!(target: "tswc", "resolve {:?} {:?}", specifier, path_str);
 
         assert!(
             path.is_dir(),
@@ -84,10 +85,7 @@ impl Resolver {
                 };
                 resolved
             }
-            Ok(resolution) => {
-                // println!("Resolved: {:?}", resolution.full_path());
-                Some(String::from(resolution.full_path().to_str().unwrap()))
-            }
+            Ok(resolution) => Some(String::from(resolution.full_path().to_str().unwrap())),
         };
         let relative_path = match &resolved_path {
             Some(resolved_path) => {
