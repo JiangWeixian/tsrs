@@ -14,26 +14,17 @@ fn main() {
     env_logger::init();
     let resolver = Resolver::new();
     let assets = Assets::new();
-    let input = String::from(
-        "./fixtures/package-a/src"
-            .as_path()
-            .absolutize()
-            .to_str()
-            .unwrap(),
-    );
-    // TODO: ensure input and output
+    let root = "./fixtures/package-a/".as_path().absolutize();
+    let input = root.join("src");
+    let output = root.join("dist");
+    let tsconfig_path = root.join("tsconfig.json");
     let config_options = ConfigOptions {
-        root: "./fixtures/package-a/".as_path().absolutize(),
-        input: input.clone(),
-        ..Default::default()
+        root,
+        input,
+        output,
     };
     let mut config = Config::new(config_options);
-    config.resolve_options(
-        "./fixtures/package-a/tsconfig.json"
-            .as_path()
-            .absolutize()
-            .as_path(),
-    );
+    config.resolve_options(&tsconfig_path);
     config.search_files();
     let inputs = config.inputs.clone();
     let mut mg = ModuleGraph::new(resolver, config);
@@ -54,10 +45,6 @@ fn main() {
                 (decl.abs_path.clone(), decl.v_abs_path.clone())
             })
             .collect();
-        // Assuming `module_graph::Module` implements `Debug`
-        // for module in mg.get_unused_modules() {
-        //     println!("used {:?}", module.used);
-        // }
         for (resolved_path, output_path) in paths_to_compile {
             debug!(target: "tswc", "output {}", output_path);
             let result = compile(&resolved_path, &mut mg);

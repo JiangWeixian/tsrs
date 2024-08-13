@@ -98,7 +98,7 @@ impl ModuleGraph {
                 path.to_str().unwrap_or_default().to_string()
             };
             let v_abs_path = abs_path.replace(
-                &self.config.resolved_options.input,
+                &self.config.resolved_options.input.to_str().unwrap(),
                 &self.config.resolved_options.output.to_str().unwrap(),
             );
             let m = Module {
@@ -115,6 +115,8 @@ impl ModuleGraph {
         }
     }
     pub fn resolve_module(&mut self, specifier: Option<String>, context: String) -> Option<Module> {
+        // TODO: currently we resolve and add every module during compile
+        // should we only resolve and add every module config in paths
         if let Some(sp) = specifier {
             let module = match self.resolver.resolve(&sp, &context) {
                 Some(resolved) => {

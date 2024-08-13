@@ -3,16 +3,26 @@ use std::path::{Path, PathBuf};
 use ignore::{overrides::OverrideBuilder, WalkBuilder};
 use tsconfig::TsConfig;
 
-#[derive(Default, Debug)]
+#[derive(Debug)]
 pub struct ConfigOptions {
-    pub input: String,
-    pub output: Option<String>,
+    pub input: PathBuf,
+    pub output: PathBuf,
     pub root: PathBuf,
+}
+
+impl Default for ConfigOptions {
+    fn default() -> Self {
+        Self {
+            input: PathBuf::default(),
+            output: PathBuf::default(),
+            root: PathBuf::default(),
+        }
+    }
 }
 
 #[derive(Default, Debug)]
 pub struct ResolvedConfigOptions {
-    pub input: String,
+    pub input: PathBuf,
     pub output: PathBuf,
     pub root: PathBuf,
 }
@@ -35,17 +45,25 @@ impl Config {
     }
     pub fn resolve_options(&mut self, tsconfig_file_path: &Path) {
         self.parse_tsconfig(tsconfig_file_path);
-        let default_out_dir = String::from("./dist");
-        let resolved_out_dir = self.options.output.as_ref().unwrap_or(&default_out_dir);
-        let output = self
-            .tsconfig
-            .as_ref()
-            .and_then(|f| f.compiler_options.as_ref())
-            .and_then(|f| f.out_dir.as_ref())
-            .unwrap_or(&resolved_out_dir);
+        let mut input: PathBuf = self.options.input.clone();
+        let mut output: PathBuf = self.options.output.clone();
+        if let Some(tsconfig) = &self.tsconfig {
+            let include = { tsconfig.include.as_ref().and_then(|f| f.get(0)) };
+            input = if let Some(include) = include {
+                self.options.root.join(include)
+            } else {
+                self.options.input.clone()
+            };
+            output = tsconfig
+                .compiler_options
+                .as_ref()
+                .and_then(|f| f.out_dir.as_ref())
+                .and_then(|f| Some(self.options.root.join(f)))
+                .unwrap_or(output);
+        }
         let output = self.options.root.join(output);
         let resolved_options = ResolvedConfigOptions {
-            input: self.options.input.clone(),
+            input,
             output,
             root: self.options.root.clone(),
         };

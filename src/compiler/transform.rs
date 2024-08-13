@@ -3,8 +3,7 @@ use std::path::Path;
 use std::sync::Arc;
 
 use super::{ModuleGraph, SwcCompiler};
-use crate::plugins::{DemoVisitor, ImportExportVisitor};
-use indexmap::IndexMap;
+use crate::plugins::ImportExportVisitor;
 use swc_core::base::config::{Config, JsMinifyFormatOptions, JscConfig, ModuleConfig, Options};
 use swc_core::base::TransformOutput;
 use swc_core::common::{chain, comments::Comments, Mark, SourceMap};
@@ -13,6 +12,7 @@ use swc_core::ecma::{
     transforms::base::pass::noop,
     visit::{as_folder, Fold},
 };
+use tsconfig::TsConfig;
 
 #[allow(clippy::too_many_arguments)]
 pub fn transform<'a>(
@@ -33,27 +33,97 @@ pub fn transform<'a>(
     ch
 }
 
-#[allow(clippy::too_many_arguments)]
-pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) -> TransformOutput {
-    // TODO: parse from tsconfig.json
-    let mut paths = IndexMap::default();
-    // paths.insert(
-    //     "@demo/package-b".into(),
-    //     vec!["../package-b/src/index.ts".into()],
-    // );
-    // NOTE: define swc config here
-    let options = Options {
-        config: Config {
-            module: Some(ModuleConfig::Es6(Default::default())),
-            jsc: JscConfig {
-                // base_url: Path::new("./").canonicalize().unwrap(),
-                paths,
+pub trait IntoOptions {
+    fn into_options(self) -> Options;
+}
+
+impl IntoOptions for TsConfig {
+    fn into_options(self) -> Options {
+        let target = self
+            .compiler_options
+            .as_ref()
+            .and_then(|f| match &f.target {
+                Some(target) => {
+                    let target = match target {
+                        tsconfig::Target::Es3 => EsVersion::Es3,
+                        tsconfig::Target::Es5 => EsVersion::Es5,
+                        tsconfig::Target::Es6 => EsVersion::Es2015,
+                        tsconfig::Target::Es7 => EsVersion::Es2016,
+                        tsconfig::Target::Es2015 => EsVersion::Es2015,
+                        tsconfig::Target::Es2016 => EsVersion::Es2016,
+                        tsconfig::Target::Es2017 => EsVersion::Es2017,
+                        tsconfig::Target::Es2018 => EsVersion::Es2018,
+                        tsconfig::Target::Es2019 => EsVersion::Es2019,
+                        tsconfig::Target::Es2020 => EsVersion::Es2020,
+                        tsconfig::Target::EsNext => EsVersion::EsNext,
+                        tsconfig::Target::Other(target) => match target.as_str() {
+                            "2021" => EsVersion::Es2021,
+                            "2022" => EsVersion::Es2022,
+                            _ => EsVersion::Es3,
+                        },
+                    };
+                    Some(target)
+                }
+                None => Some(EsVersion::Es3),
+            })
+            .unwrap_or(EsVersion::Es3);
+        let module = self
+            .compiler_options
+            .as_ref()
+            .and_then(|f| match &f.module {
+                Some(module) => {
+                    let module = match module {
+                        tsconfig::Module::CommonJs => ModuleConfig::CommonJs(Default::default()),
+                        tsconfig::Module::Amd => ModuleConfig::Amd(Default::default()),
+                        tsconfig::Module::Umd => ModuleConfig::Umd(Default::default()),
+                        tsconfig::Module::System => ModuleConfig::SystemJs(Default::default()),
+                        tsconfig::Module::Es6 => ModuleConfig::Es6(Default::default()),
+                        tsconfig::Module::EsNext => ModuleConfig::Es6(Default::default()),
+                        tsconfig::Module::Es2015 => ModuleConfig::Es6(Default::default()),
+                        tsconfig::Module::Es2020 => ModuleConfig::Es6(Default::default()),
+                        tsconfig::Module::Other(module) => {
+                            if module == "Node16" || module == "NodeNext" {
+                                ModuleConfig::NodeNext(Default::default())
+                            } else {
+                                let m = if target == EsVersion::Es3 || target == EsVersion::Es5 {
+                                    ModuleConfig::CommonJs(Default::default())
+                                } else {
+                                    ModuleConfig::Es6(Default::default())
+                                };
+                                m
+                            }
+                        }
+                        tsconfig::Module::None => {
+                            let m = if target == EsVersion::Es3 || target == EsVersion::Es5 {
+                                ModuleConfig::CommonJs(Default::default())
+                            } else {
+                                ModuleConfig::Es6(Default::default())
+                            };
+                            m
+                        }
+                    };
+                    Some(module)
+                }
+                None => Some(ModuleConfig::CommonJs(Default::default())),
+            });
+
+        Options {
+            config: Config {
+                module,
+                jsc: JscConfig {
+                    target: Some(target),
+                    ..Default::default()
+                },
                 ..Default::default()
             },
             ..Default::default()
-        },
-        ..Default::default()
-    };
+        }
+    }
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) -> TransformOutput {
+    let options = module_graph.config.tsconfig.clone().unwrap().into_options();
     // to absolute path
     let resource_path = Path::new(resource_path).canonicalize().expect("TODO:");
     let source = fs::read_to_string(&resource_path).expect("failed to read file");
