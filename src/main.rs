@@ -14,6 +14,7 @@ fn main() {
     env_logger::init();
     let resolver = Resolver::new();
     let assets = Assets::new();
+    // TODO: read from args.env
     let root = "./fixtures/package-a/".as_path().absolutize();
     let input = root.join("src");
     let output = root.join("dist");
