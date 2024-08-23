@@ -1,0 +1,12 @@
+{
+  "name": "tswc-darwin-arm64",
+  "version": "0.0.0",
+  "os": ["darwin"],
+  "cpu": ["arm64"],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "files": ["tswc.darwin-arm64.node"],
+  "main": "tswc.darwin-arm64.node"
+}

@@ -1,0 +1,13 @@
+{
+  "name": "tswc-linux-arm64-musl",
+  "version": "0.0.0",
+  "os": ["linux"],
+  "cpu": ["arm64"],
+  "license": "MIT",
+  "engines": {
+    "node": ">= 10"
+  },
+  "files": ["tswc.linux-arm64-musl.node"],
+  "main": "tswc.linux-arm64-musl.node",
+  "libc": ["musl"]
+}
