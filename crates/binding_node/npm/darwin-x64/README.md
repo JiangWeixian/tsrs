@@ -1,3 +1,3 @@
-# `ts-swc-darwin-x64`
+# `tsrs-darwin-x64`
 
-This is the **x86_64-apple-darwin** binary for `ts-swc`
+This is the **x86_64-apple-darwin** binary for `tsrs`

@@ -2,7 +2,7 @@ name: release
 
 env:
   DEBUG: "napi:*"
-  APP_NAME: ts-swc
+  APP_NAME: tsrs
   MACOSX_DEPLOYMENT_TARGET: "10.13"
   CI_TEST: 1
 

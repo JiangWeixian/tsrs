@@ -1,3 +1,3 @@
-# `ts-swc-linux-arm64-musl`
+# `tsrs-linux-arm64-musl`
 
-This is the **aarch64-unknown-linux-musl** binary for `ts-swc`
+This is the **aarch64-unknown-linux-musl** binary for `tsrs`

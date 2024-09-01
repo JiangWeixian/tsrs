@@ -1,5 +1,5 @@
 {
-  "name": "ts-swc",
+  "name": "tsrs",
   "version": "0.0.0",
   "license": "MIT",
   "engines": {
@@ -9,7 +9,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "ts-swc",
+    "name": "tsrs",
     "triples": {
       "additional": [
         "aarch64-apple-darwin",
@@ -28,14 +28,14 @@
     "test:e2e": "node ./scripts/test.js"
   },
   "optionalDependencies": {
-    "ts-swc-darwin-arm64": "workspace:*",
-    "ts-swc-darwin-x64": "workspace:*",
-    "ts-swc-linux-arm64-gnu": "workspace:*",
-    "ts-swc-linux-arm64-musl": "workspace:*",
-    "ts-swc-linux-x64-gnu": "workspace:*",
-    "ts-swc-linux-x64-musl": "workspace:*",
-    "ts-swc-win32-arm64-msvc": "workspace:*",
-    "ts-swc-win32-x64-msvc": "workspace:*"
+    "tsrs-darwin-arm64": "workspace:*",
+    "tsrs-darwin-x64": "workspace:*",
+    "tsrs-linux-arm64-gnu": "workspace:*",
+    "tsrs-linux-arm64-musl": "workspace:*",
+    "tsrs-linux-x64-gnu": "workspace:*",
+    "tsrs-linux-x64-musl": "workspace:*",
+    "tsrs-win32-arm64-msvc": "workspace:*",
+    "tsrs-win32-x64-msvc": "workspace:*"
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
