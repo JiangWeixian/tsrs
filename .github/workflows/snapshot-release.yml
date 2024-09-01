@@ -326,7 +326,7 @@ jobs:
         run: pnpm artifacts
 
       - name: List packages
-        run: ls -R ./npm
+        run: ls -R ./crates/binding_node/npm
         shell: bash
 
       - name: create and publish versions
