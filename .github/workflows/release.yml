@@ -16,10 +16,6 @@ on:
       - "**/*.gitignore"
       - .editorconfig
       - docs/**
-  pull_request:
-    paths:
-      - .changeset/**
-    branches: [master, main, release]
 jobs:
   build:
     strategy:
