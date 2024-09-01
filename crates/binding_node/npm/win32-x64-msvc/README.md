@@ -1,3 +1,3 @@
-# `tswc-win32-x64-msvc`
+# `ts-swc-win32-x64-msvc`
 
-This is the **x86_64-pc-windows-msvc** binary for `tswc`
+This is the **x86_64-pc-windows-msvc** binary for `ts-swc`

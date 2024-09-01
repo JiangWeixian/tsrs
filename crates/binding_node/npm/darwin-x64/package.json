@@ -1,5 +1,5 @@
 {
-  "name": "tswc-darwin-x64",
+  "name": "ts-swc-darwin-x64",
   "version": "0.0.0",
   "os": ["darwin"],
   "cpu": ["x64"],
@@ -7,6 +7,6 @@
   "engines": {
     "node": ">= 10"
   },
-  "files": ["tswc.darwin-x64.node"],
-  "main": "tswc.darwin-x64.node"
+  "files": ["ts-swc.darwin-x64.node"],
+  "main": "ts-swc.darwin-x64.node"
 }

@@ -1,5 +1,5 @@
 {
-  "name": "tswc-darwin-arm64",
+  "name": "ts-swc-darwin-arm64",
   "version": "0.0.0",
   "os": ["darwin"],
   "cpu": ["arm64"],
@@ -7,6 +7,6 @@
   "engines": {
     "node": ">= 10"
   },
-  "files": ["tswc.darwin-arm64.node"],
-  "main": "tswc.darwin-arm64.node"
+  "files": ["ts-swc.darwin-arm64.node"],
+  "main": "ts-swc.darwin-arm64.node"
 }

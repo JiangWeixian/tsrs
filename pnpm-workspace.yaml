@@ -1,2 +1,4 @@
 packages:
   - "./fixtures/**"
+  - "./crates/**"
+  - "./crates/binding_node/npm/**"

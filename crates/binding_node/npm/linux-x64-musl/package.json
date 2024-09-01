@@ -1,5 +1,5 @@
 {
-  "name": "tswc-linux-x64-musl",
+  "name": "ts-swc-linux-x64-musl",
   "version": "0.0.0",
   "os": ["linux"],
   "cpu": ["x64"],
@@ -7,7 +7,7 @@
   "engines": {
     "node": ">= 10"
   },
-  "files": ["tswc.linux-x64-musl.node"],
-  "main": "tswc.linux-x64-musl.node",
+  "files": ["ts-swc.linux-x64-musl.node"],
+  "main": "ts-swc.linux-x64-musl.node",
   "libc": ["musl"]
 }

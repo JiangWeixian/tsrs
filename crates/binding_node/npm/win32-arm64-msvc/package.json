@@ -1,5 +1,5 @@
 {
-  "name": "tswc-win32-arm64-msvc",
+  "name": "ts-swc-win32-arm64-msvc",
   "version": "0.0.0",
   "os": ["win32"],
   "cpu": ["arm64"],
@@ -7,6 +7,6 @@
   "engines": {
     "node": ">= 10"
   },
-  "files": ["tswc.win32-arm64-msvc.node"],
-  "main": "tswc.win32-arm64-msvc.node"
+  "files": ["ts-swc.win32-arm64-msvc.node"],
+  "main": "ts-swc.win32-arm64-msvc.node"
 }

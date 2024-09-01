@@ -1,5 +1,5 @@
 {
-  "name": "tswc",
+  "name": "ts-swc",
   "version": "0.0.0",
   "license": "MIT",
   "engines": {
@@ -8,7 +8,7 @@
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
-    "name": "tswc",
+    "name": "ts-swc",
     "triples": {
       "additional": [
         "aarch64-apple-darwin",
@@ -25,6 +25,7 @@
     "build:debug": "napi build --platform",
     "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
+    "test:e2e": "node ./scripts/test.js",
     "universal": "napi universal",
     "version": "napi version"
   },

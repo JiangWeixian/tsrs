@@ -1,3 +1,3 @@
-# `tswc-linux-x64-musl`
+# `ts-swc-linux-x64-musl`
 
-This is the **x86_64-unknown-linux-musl** binary for `tswc`
+This is the **x86_64-unknown-linux-musl** binary for `ts-swc`
