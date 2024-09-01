@@ -1,3 +1,8 @@
 [workspace]
 
-members = ["./crates/tswc", "./crates/tswc-nodebindings"]
+members = ["./crates/tswc", "./crates/binding_node"]
+resolver = "2"
+
+[workspace.dependencies]
+napi-derive = "2.12.2"
+napi = { version = "2.12.2", default-features = false, features = ["napi4"] }

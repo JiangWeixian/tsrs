@@ -4,7 +4,7 @@ module.exports = aiou(
   { ssr: false },
   [
     {
-      ignores: ['**/fixtures/**'],
+      ignores: ['**/fixtures/**', '**/*.d.ts'],
     },
   ],
 )

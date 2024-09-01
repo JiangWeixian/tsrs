@@ -1,21 +1,22 @@
-mod compiler;
-mod config;
-mod plugins;
-mod resolver;
-mod utils;
-
-use compiler::{compile, Assets, ModuleGraph};
-use config::{Config, ConfigOptions};
+use crate::compiler::{compile, Assets, ModuleGraph};
+use crate::config::{Config, ConfigOptions};
+use crate::resolver::Resolver;
 use log::debug;
-use resolver::Resolver;
+use napi_derive::napi;
 use sugar_path::SugarPath;
 
-fn main() {
+#[napi(object)]
+pub struct TransformOptions {
+  pub root: String,
+}
+
+pub fn transform(options: TransformOptions) {
   env_logger::init();
   let resolver = Resolver::new();
   let assets = Assets::new();
+  let TransformOptions { root } = options;
   // TODO: read from args.env
-  let root = "../../fixtures/package-a/".as_path().absolutize();
+  let root = root.as_path().absolutize();
   debug!(target: "tswc", "root {:?}", root);
   let input = root.join("src");
   let output = root.join("dist");
