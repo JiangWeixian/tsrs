@@ -9,7 +9,7 @@ env:
 on:
   push:
     branches:
-      - main
+      - snapshot
     tags-ignore:
       - "**"
     paths-ignore:
@@ -17,8 +17,10 @@ on:
       - "**/*.gitignore"
       - .editorconfig
       - docs/**
-  pull_request: null
-
+  pull_request:
+    paths:
+      - .changeset/**
+    branches: [master, main, release, snapshot]
 jobs:
   build:
     strategy:
@@ -340,12 +342,10 @@ jobs:
         shell: bash
 
       - name: create and publish versions
-        uses: changesets/action@v1
-        with:
-          version: pnpm ci:version
-          commit: "chore: update versions"
-          title: "chore: update versions"
-          publish: pnpm ci:publish
+        run: |
+          pnpm ci:snapshot
+          pnpm changeset pre enter snapshot
+          pnpm ci:prerelease
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}

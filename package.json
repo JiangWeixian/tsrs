@@ -1,12 +1,12 @@
 {
   "name": "ts-swc",
   "version": "1.0.0",
+  "private": true,
   "packageManager": "pnpm@9.3.0",
   "description": "",
-  "keywords": [],
+  "keywords": ["typescript", "swc"],
   "license": "MIT",
-  "author": "",
-  "main": "index.js",
+  "author": "JW",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "ci:version": "pnpm changeset version",

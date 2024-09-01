@@ -23,11 +23,18 @@
     "artifacts": "napi artifacts",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-    "prepublishOnly": "napi prepublish -t npm",
     "test": "ava",
-    "test:e2e": "node ./scripts/test.js",
-    "universal": "napi universal",
-    "version": "napi version"
+    "test:e2e": "node ./scripts/test.js"
+  },
+  "optionalDependencies": {
+    "ts-swc-darwin-arm64": "workspace:*",
+    "ts-swc-darwin-x64": "workspace:*",
+    "ts-swc-linux-arm64-gnu": "workspace:*",
+    "ts-swc-linux-arm64-musl": "workspace:*",
+    "ts-swc-linux-x64-gnu": "workspace:*",
+    "ts-swc-linux-x64-musl": "workspace:*",
+    "ts-swc-win32-arm64-msvc": "workspace:*",
+    "ts-swc-win32-x64-msvc": "workspace:*"
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
@@ -35,5 +42,8 @@
   },
   "ava": {
     "timeout": "3m"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
