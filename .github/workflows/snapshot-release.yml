@@ -330,6 +330,14 @@ jobs:
         run: ls -R ./crates/binding_node/npm
         shell: bash
 
+      - name: Creating .npmrc
+        run: |
+          cat << EOF > "$HOME/.npmrc"
+            //registry.npmjs.org/:_authToken=$NPM_TOKEN
+          EOF
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
       - name: create and publish versions
         run: |
           pnpm ci:snapshot
