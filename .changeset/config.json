@@ -5,6 +5,7 @@
   "linked": [],
   "access": "public",
   "baseBranch": "main",
+  "fixed": [["ts-swc-*"]],
   "updateInternalDependencies": "patch",
-  "ignore": []
+  "ignore": ["@demo/*"]
 }
