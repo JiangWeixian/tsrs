@@ -21,7 +21,7 @@
     }
   },
   "scripts": {
-    "artifacts": "napi artifacts",
+    "artifacts": "napi artifacts --dist=./crates/binding_node/npm",
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
     "test": "ava",
