@@ -17,6 +17,9 @@
         "aarch64-pc-windows-msvc",
         "x86_64-unknown-linux-musl"
       ]
+    },
+    "package": {
+      "name": "@tsrs/core"
     }
   },
   "scripts": {

@@ -1,5 +1,5 @@
 {
-  "name": "tsrs-darwin-arm64",
+  "name": "@tsrs/core-darwin-arm64",
   "version": "0.0.0",
   "os": ["darwin"],
   "cpu": ["arm64"],

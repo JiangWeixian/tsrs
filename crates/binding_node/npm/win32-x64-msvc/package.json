@@ -1,5 +1,5 @@
 {
-  "name": "tsrs-win32-x64-msvc",
+  "name": "@tsrs/core-win32-x64-msvc",
   "version": "0.0.0",
   "os": ["win32"],
   "cpu": ["x64"],
