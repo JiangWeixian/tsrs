@@ -5,7 +5,6 @@
   "linked": [],
   "access": "public",
   "baseBranch": "main",
-  "fixed": [["tsrs-*"]],
   "updateInternalDependencies": "patch",
   "ignore": ["@demo/*"]
 }
