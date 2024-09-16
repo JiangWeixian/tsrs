@@ -1,6 +1,6 @@
 use crate::compiler::{compile, Assets, ModuleGraph};
 use crate::config::{Config, ConfigOptions};
-use crate::resolver::Resolver;
+use crate::resolver::{Resolver, ResolverOptions};
 use log::debug;
 use napi_derive::napi;
 use sugar_path::SugarPath;
@@ -8,31 +8,45 @@ use sugar_path::SugarPath;
 #[napi(object)]
 pub struct TransformOptions {
   pub root: String,
+  // override tsconfig outDir
+  pub output: Option<String>,
+  pub externals: Option<Vec<String>>,
+  // override tsconfig exclude
+  pub exclude: Option<Vec<String>>,
+  // TODO: should nested in resolve config
+  pub modules: Option<Vec<String>>,
 }
 
 pub fn transform(options: TransformOptions) {
   env_logger::init();
-  let resolver = Resolver::new();
   let assets = Assets::new();
-  let TransformOptions { root } = options;
-  // TODO: read from args.env
+  let TransformOptions {
+    root,
+    output,
+    externals,
+    exclude,
+    modules,
+  } = options;
   let root = root.as_path().absolutize();
-  debug!(target: "tswc", "root {:?}", root);
-  let input = root.join("src");
-  let output = root.join("dist");
   let tsconfig_path = root.join("tsconfig.json");
+  let resolver = Resolver::new(ResolverOptions {
+    externals: externals.unwrap_or(vec![]),
+    modules: modules.unwrap_or(vec!["node_modules".into()]),
+    tsconfig: tsconfig_path.clone(),
+  });
+  debug!(target: "tswc", "root {:?}", root);
   let config_options = ConfigOptions {
     root,
-    input,
     output,
+    exclude,
   };
   let mut config = Config::new(config_options);
   config.resolve_options(&tsconfig_path);
   config.search_files();
-  let inputs = config.inputs.clone();
+  let files = config.files.clone();
   let mut mg = ModuleGraph::new(resolver, config);
-  debug!(target: "tswc", "inputs {:?}", inputs);
-  for path in inputs {
+  debug!(target: "tswc", "files {:?}", files);
+  for path in files {
     let resource_path = path.as_path().absolutize();
     mg.resolve_entry_module(Some(resource_path.to_str().unwrap_or_default().to_string()));
   }

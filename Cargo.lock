@@ -3031,6 +3031,7 @@ dependencies = [
  "once_cell",
  "oxc_resolver",
  "proc-macro2",
+ "regex",
  "serde",
  "serde_json",
  "sugar_path",
