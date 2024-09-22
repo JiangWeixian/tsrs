@@ -59,13 +59,21 @@ pub fn transform(options: TransformOptions) {
             target: "tswc",
             "compile! {:?} {:?}", &decl.abs_path, &decl.v_abs_path
         );
-        (decl.abs_path.clone(), decl.v_abs_path.clone())
+        (
+          decl.abs_path.clone(),
+          decl.v_abs_path.clone(),
+          decl.is_script,
+        )
       })
       .collect();
-    for (resolved_path, output_path) in paths_to_compile {
-      debug!(target: "tswc", "output {}", output_path);
-      let result = compile(&resolved_path, &mut mg);
-      assets.output(&output_path, result)
+    for (resolved_path, output_path, is_script) in paths_to_compile {
+      debug!(target: "tswc", "output {} {}", output_path, is_script);
+      if (is_script) {
+        let result = compile(&resolved_path, &mut mg);
+        assets.output(&output_path, result)
+      } else {
+        assets.copy(&output_path, &resolved_path)
+      }
     }
   }
 }

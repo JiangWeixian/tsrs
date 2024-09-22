@@ -112,8 +112,9 @@ impl ModuleGraph {
       let m = Module {
         specifier: sp,
         v_abs_path: String::from(v_abs_path),
-        abs_path: String::from(abs_path.clone()),
+        abs_path: String::from(&abs_path),
         is_entry: true,
+        is_script: SCRIPT_RE.is_match(&abs_path),
         ..Default::default()
       };
       self.add_module(abs_path, m.clone());
@@ -158,12 +159,12 @@ impl ModuleGraph {
               }
             })
           });
-          debug!(
-              target: "tswc",
-              "relative_path {:?} v_relative_path {:?} abs_path {:?} v_abs_path {:?} context {:?}",
-              relative_path, v_relative_path, abs_path, v_abs_path, v_context
-          );
           let is_script = SCRIPT_RE.is_match(&abs_path.clone().unwrap_or_default());
+          debug!(
+            target: "tswc",
+            "abs_path {:?} v_abs_path {:?} is_script {:?}",
+            abs_path, v_abs_path, is_script
+          );
           let m = Module {
             specifier: sp,
             context: context.unwrap_or_default(),
@@ -173,7 +174,7 @@ impl ModuleGraph {
             relative_path: relative_path.unwrap_or_default(),
             v_relative_path: v_relative_path.unwrap_or_default(),
             // TODO: maybe renamed to skip compile
-            used: resolved.built_in || resolved.is_node_modules || resolved.not_found || !is_script,
+            used: resolved.built_in || resolved.is_node_modules || resolved.not_found,
             is_node_modules: resolved.is_node_modules,
             not_found: resolved.not_found,
             built_in: resolved.built_in,

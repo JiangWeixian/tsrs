@@ -1,3 +1,4 @@
+import './global.css'
 import { name } from '@demo/package-b'
 import { table } from 'functional-md'
 
