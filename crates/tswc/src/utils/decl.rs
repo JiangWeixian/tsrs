@@ -27,8 +27,9 @@ pub enum ImportType {
 
 #[derive(Debug, Clone)]
 pub struct ImportSpecifier {
+  // import x from "n"
   #[doc = " Source name "]
-  pub n: Option<String>,
+  pub src: Option<String>,
   #[doc = " Type of import statement "]
   pub t: ImportType,
 }
@@ -39,4 +40,8 @@ pub struct ExportSpecifier {
   pub n: String,
   #[doc = " Export origin name "]
   pub ln: Option<String>,
+  #[doc = " Source name "]
+  pub src: Option<String>,
+  #[doc = " Export star "]
+  pub wildcard: bool,
 }

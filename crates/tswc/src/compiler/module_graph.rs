@@ -125,6 +125,7 @@ impl ModuleGraph {
   pub fn resolve_module(&mut self, specifier: Option<String>, context: String) -> Option<Module> {
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
+    // TODO: should skip resolve if specifier and context found in module graph
     if let Some(sp) = specifier {
       let module = match self.resolver.resolve(&sp, &context) {
         Some(resolved) => {
