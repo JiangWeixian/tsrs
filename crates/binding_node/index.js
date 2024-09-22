@@ -32,24 +32,24 @@ switch (platform) {
   case 'android':
     switch (arch) {
       case 'arm64':
-        localFileExisted = existsSync(join(__dirname, 'tswc.android-arm64.node'))
+        localFileExisted = existsSync(join(__dirname, 'tsrs.android-arm64.node'))
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.android-arm64.node')
+            nativeBinding = require('./tsrs.android-arm64.node')
           } else {
-            nativeBinding = require('tswc-android-arm64')
+            nativeBinding = require('@tsrs/core-android-arm64')
           }
         } catch (e) {
           loadError = e
         }
         break
       case 'arm':
-        localFileExisted = existsSync(join(__dirname, 'tswc.android-arm-eabi.node'))
+        localFileExisted = existsSync(join(__dirname, 'tsrs.android-arm-eabi.node'))
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.android-arm-eabi.node')
+            nativeBinding = require('./tsrs.android-arm-eabi.node')
           } else {
-            nativeBinding = require('tswc-android-arm-eabi')
+            nativeBinding = require('@tsrs/core-android-arm-eabi')
           }
         } catch (e) {
           loadError = e
@@ -63,13 +63,13 @@ switch (platform) {
     switch (arch) {
       case 'x64':
         localFileExisted = existsSync(
-          join(__dirname, 'tswc.win32-x64-msvc.node')
+          join(__dirname, 'tsrs.win32-x64-msvc.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.win32-x64-msvc.node')
+            nativeBinding = require('./tsrs.win32-x64-msvc.node')
           } else {
-            nativeBinding = require('tswc-win32-x64-msvc')
+            nativeBinding = require('@tsrs/core-win32-x64-msvc')
           }
         } catch (e) {
           loadError = e
@@ -77,13 +77,13 @@ switch (platform) {
         break
       case 'ia32':
         localFileExisted = existsSync(
-          join(__dirname, 'tswc.win32-ia32-msvc.node')
+          join(__dirname, 'tsrs.win32-ia32-msvc.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.win32-ia32-msvc.node')
+            nativeBinding = require('./tsrs.win32-ia32-msvc.node')
           } else {
-            nativeBinding = require('tswc-win32-ia32-msvc')
+            nativeBinding = require('@tsrs/core-win32-ia32-msvc')
           }
         } catch (e) {
           loadError = e
@@ -91,13 +91,13 @@ switch (platform) {
         break
       case 'arm64':
         localFileExisted = existsSync(
-          join(__dirname, 'tswc.win32-arm64-msvc.node')
+          join(__dirname, 'tsrs.win32-arm64-msvc.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.win32-arm64-msvc.node')
+            nativeBinding = require('./tsrs.win32-arm64-msvc.node')
           } else {
-            nativeBinding = require('tswc-win32-arm64-msvc')
+            nativeBinding = require('@tsrs/core-win32-arm64-msvc')
           }
         } catch (e) {
           loadError = e
@@ -108,23 +108,23 @@ switch (platform) {
     }
     break
   case 'darwin':
-    localFileExisted = existsSync(join(__dirname, 'tswc.darwin-universal.node'))
+    localFileExisted = existsSync(join(__dirname, 'tsrs.darwin-universal.node'))
     try {
       if (localFileExisted) {
-        nativeBinding = require('./tswc.darwin-universal.node')
+        nativeBinding = require('./tsrs.darwin-universal.node')
       } else {
-        nativeBinding = require('tswc-darwin-universal')
+        nativeBinding = require('@tsrs/core-darwin-universal')
       }
       break
     } catch {}
     switch (arch) {
       case 'x64':
-        localFileExisted = existsSync(join(__dirname, 'tswc.darwin-x64.node'))
+        localFileExisted = existsSync(join(__dirname, 'tsrs.darwin-x64.node'))
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.darwin-x64.node')
+            nativeBinding = require('./tsrs.darwin-x64.node')
           } else {
-            nativeBinding = require('tswc-darwin-x64')
+            nativeBinding = require('@tsrs/core-darwin-x64')
           }
         } catch (e) {
           loadError = e
@@ -132,13 +132,13 @@ switch (platform) {
         break
       case 'arm64':
         localFileExisted = existsSync(
-          join(__dirname, 'tswc.darwin-arm64.node')
+          join(__dirname, 'tsrs.darwin-arm64.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.darwin-arm64.node')
+            nativeBinding = require('./tsrs.darwin-arm64.node')
           } else {
-            nativeBinding = require('tswc-darwin-arm64')
+            nativeBinding = require('@tsrs/core-darwin-arm64')
           }
         } catch (e) {
           loadError = e
@@ -152,12 +152,12 @@ switch (platform) {
     if (arch !== 'x64') {
       throw new Error(`Unsupported architecture on FreeBSD: ${arch}`)
     }
-    localFileExisted = existsSync(join(__dirname, 'tswc.freebsd-x64.node'))
+    localFileExisted = existsSync(join(__dirname, 'tsrs.freebsd-x64.node'))
     try {
       if (localFileExisted) {
-        nativeBinding = require('./tswc.freebsd-x64.node')
+        nativeBinding = require('./tsrs.freebsd-x64.node')
       } else {
-        nativeBinding = require('tswc-freebsd-x64')
+        nativeBinding = require('@tsrs/core-freebsd-x64')
       }
     } catch (e) {
       loadError = e
@@ -168,26 +168,26 @@ switch (platform) {
       case 'x64':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-x64-musl.node')
+            join(__dirname, 'tsrs.linux-x64-musl.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-x64-musl.node')
+              nativeBinding = require('./tsrs.linux-x64-musl.node')
             } else {
-              nativeBinding = require('tswc-linux-x64-musl')
+              nativeBinding = require('@tsrs/core-linux-x64-musl')
             }
           } catch (e) {
             loadError = e
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-x64-gnu.node')
+            join(__dirname, 'tsrs.linux-x64-gnu.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-x64-gnu.node')
+              nativeBinding = require('./tsrs.linux-x64-gnu.node')
             } else {
-              nativeBinding = require('tswc-linux-x64-gnu')
+              nativeBinding = require('@tsrs/core-linux-x64-gnu')
             }
           } catch (e) {
             loadError = e
@@ -197,26 +197,26 @@ switch (platform) {
       case 'arm64':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-arm64-musl.node')
+            join(__dirname, 'tsrs.linux-arm64-musl.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-arm64-musl.node')
+              nativeBinding = require('./tsrs.linux-arm64-musl.node')
             } else {
-              nativeBinding = require('tswc-linux-arm64-musl')
+              nativeBinding = require('@tsrs/core-linux-arm64-musl')
             }
           } catch (e) {
             loadError = e
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-arm64-gnu.node')
+            join(__dirname, 'tsrs.linux-arm64-gnu.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-arm64-gnu.node')
+              nativeBinding = require('./tsrs.linux-arm64-gnu.node')
             } else {
-              nativeBinding = require('tswc-linux-arm64-gnu')
+              nativeBinding = require('@tsrs/core-linux-arm64-gnu')
             }
           } catch (e) {
             loadError = e
@@ -226,26 +226,26 @@ switch (platform) {
       case 'arm':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-arm-musleabihf.node')
+            join(__dirname, 'tsrs.linux-arm-musleabihf.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-arm-musleabihf.node')
+              nativeBinding = require('./tsrs.linux-arm-musleabihf.node')
             } else {
-              nativeBinding = require('tswc-linux-arm-musleabihf')
+              nativeBinding = require('@tsrs/core-linux-arm-musleabihf')
             }
           } catch (e) {
             loadError = e
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-arm-gnueabihf.node')
+            join(__dirname, 'tsrs.linux-arm-gnueabihf.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-arm-gnueabihf.node')
+              nativeBinding = require('./tsrs.linux-arm-gnueabihf.node')
             } else {
-              nativeBinding = require('tswc-linux-arm-gnueabihf')
+              nativeBinding = require('@tsrs/core-linux-arm-gnueabihf')
             }
           } catch (e) {
             loadError = e
@@ -255,26 +255,26 @@ switch (platform) {
       case 'riscv64':
         if (isMusl()) {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-riscv64-musl.node')
+            join(__dirname, 'tsrs.linux-riscv64-musl.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-riscv64-musl.node')
+              nativeBinding = require('./tsrs.linux-riscv64-musl.node')
             } else {
-              nativeBinding = require('tswc-linux-riscv64-musl')
+              nativeBinding = require('@tsrs/core-linux-riscv64-musl')
             }
           } catch (e) {
             loadError = e
           }
         } else {
           localFileExisted = existsSync(
-            join(__dirname, 'tswc.linux-riscv64-gnu.node')
+            join(__dirname, 'tsrs.linux-riscv64-gnu.node')
           )
           try {
             if (localFileExisted) {
-              nativeBinding = require('./tswc.linux-riscv64-gnu.node')
+              nativeBinding = require('./tsrs.linux-riscv64-gnu.node')
             } else {
-              nativeBinding = require('tswc-linux-riscv64-gnu')
+              nativeBinding = require('@tsrs/core-linux-riscv64-gnu')
             }
           } catch (e) {
             loadError = e
@@ -283,13 +283,13 @@ switch (platform) {
         break
       case 's390x':
         localFileExisted = existsSync(
-          join(__dirname, 'tswc.linux-s390x-gnu.node')
+          join(__dirname, 'tsrs.linux-s390x-gnu.node')
         )
         try {
           if (localFileExisted) {
-            nativeBinding = require('./tswc.linux-s390x-gnu.node')
+            nativeBinding = require('./tsrs.linux-s390x-gnu.node')
           } else {
-            nativeBinding = require('tswc-linux-s390x-gnu')
+            nativeBinding = require('@tsrs/core-linux-s390x-gnu')
           }
         } catch (e) {
           loadError = e

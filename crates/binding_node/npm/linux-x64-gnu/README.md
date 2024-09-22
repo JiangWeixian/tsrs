@@ -1,3 +1,3 @@
-# `ts-swc-linux-x64-gnu`
+# `tsrs-linux-x64-gnu`
 
-This is the **x86_64-unknown-linux-gnu** binary for `ts-swc`
+This is the **x86_64-unknown-linux-gnu** binary for `tsrs`

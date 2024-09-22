@@ -1,3 +1,1 @@
-const another = true
-
-export default another
+export const another = true
