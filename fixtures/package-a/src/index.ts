@@ -1,4 +1,5 @@
 import './global.css'
+import './query.css?query'
 import { name } from '@demo/package-b'
 import { table } from 'functional-md'
 import * as reexport from './re-export'

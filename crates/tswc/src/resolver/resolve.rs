@@ -81,7 +81,6 @@ impl Resolver {
       ..ResolveOptions::default()
     };
     let cjs_resolver = OxcResolver::new(resolved_options);
-    println!("{:?}", resolver_options);
     Self {
       cjs_resolver,
       options: resolver_options,
