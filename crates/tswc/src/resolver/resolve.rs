@@ -2,8 +2,7 @@ use std::path::PathBuf;
 
 use log::debug;
 use oxc_resolver::{
-  AliasValue, ResolveError, ResolveOptions, Resolver as OxcResolver, TsconfigOptions,
-  TsconfigReferences,
+  ResolveError, ResolveOptions, Resolver as OxcResolver, TsconfigOptions, TsconfigReferences,
 };
 use sugar_path::SugarPath;
 
@@ -128,7 +127,7 @@ impl Resolver {
 
     let resolved_path: Option<String> = match resolver.resolve(path, &specifier) {
       Err(error) => {
-        let resolved: Option<String> = match error {
+        match error {
           ResolveError::Builtin(spec) => {
             built_in = true;
             return Some(ResolvedSpecifier {
@@ -152,7 +151,6 @@ impl Resolver {
             });
           }
         };
-        resolved
       }
       Ok(resolution) => Some(String::from(resolution.full_path().to_str().unwrap())),
     };

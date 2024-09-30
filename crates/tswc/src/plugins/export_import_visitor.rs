@@ -85,6 +85,38 @@ impl<'a> ImportExportVisitor<'a> {
       return;
     }
 
+    for spec in &import.specifiers {
+      let src = import.src.value.to_string();
+      match spec {
+        SWCImportSpecifier::Named(s) => {
+          self.local_idents.insert(
+            s.local.sym.to_string(),
+            (
+              src.clone(),
+              match &s.imported {
+                Some(n) => match &n {
+                  ModuleExportName::Ident(n) => n.sym.to_string(),
+                  ModuleExportName::Str(n) => n.value.to_string(),
+                },
+                None => s.local.sym.to_string(),
+              },
+            ),
+          );
+        }
+        SWCImportSpecifier::Namespace(s) => {
+          self
+            .local_idents
+            .insert(s.local.sym.to_string(), (src.clone(), "*".to_string()));
+        }
+        SWCImportSpecifier::Default(s) => {
+          self.local_idents.insert(
+            s.local.sym.to_string(),
+            (src.clone(), "default".to_string()),
+          );
+        }
+      }
+    }
+
     let first_specifier = &import.specifiers[0];
     match first_specifier {
       // import a from 'bbbb'
@@ -121,38 +153,6 @@ impl<'a> ImportExportVisitor<'a> {
           if let Some(v) = m.and_then(|f| f.with_ext()) {
             import.src = Box::new(ast::Str::from(v));
           }
-        }
-      }
-    }
-
-    for spec in &import.specifiers {
-      let src = import.src.value.to_string();
-      match spec {
-        SWCImportSpecifier::Named(s) => {
-          self.local_idents.insert(
-            s.local.sym.to_string(),
-            (
-              src.clone(),
-              match &s.imported {
-                Some(n) => match &n {
-                  ModuleExportName::Ident(n) => n.sym.to_string(),
-                  ModuleExportName::Str(n) => n.value.to_string(),
-                },
-                None => s.local.sym.to_string(),
-              },
-            ),
-          );
-        }
-        SWCImportSpecifier::Namespace(s) => {
-          self
-            .local_idents
-            .insert(s.local.sym.to_string(), (src.clone(), "*".to_string()));
-        }
-        SWCImportSpecifier::Default(s) => {
-          self.local_idents.insert(
-            s.local.sym.to_string(),
-            (src.clone(), "default".to_string()),
-          );
         }
       }
     }
@@ -233,6 +233,7 @@ impl<'a> ImportExportVisitor<'a> {
           None
         };
 
+        debug!(target: "tswc", "add export {:?} {:?}", src_str, self.context);
         let m = self.add_export(ExportSpecifier {
           n: name,
           ln: origin_name,

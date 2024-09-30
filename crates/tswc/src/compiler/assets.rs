@@ -26,6 +26,6 @@ impl Assets {
     if let Some(parent) = path.parent() {
       create_dir_all(parent).expect("Failed to create directories");
     }
-    copy(src, output_path).expect("Failed to copy file");
+    copy(src, output_path).expect(&format!("Failed to copy file from {}", src));
   }
 }
