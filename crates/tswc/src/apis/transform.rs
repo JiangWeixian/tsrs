@@ -68,7 +68,7 @@ pub fn transform(options: TransformOptions) {
       .collect();
     for (resolved_path, output_path, is_script) in paths_to_compile {
       debug!(target: "tswc", "output {} {}", output_path, is_script);
-      if (is_script) {
+      if is_script {
         let result = compile(&resolved_path, &mut mg);
         assets.output(&output_path, result)
       } else {

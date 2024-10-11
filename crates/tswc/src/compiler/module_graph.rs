@@ -1,6 +1,4 @@
 use log::debug;
-use once_cell::sync::Lazy;
-use regex::Regex;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
@@ -136,6 +134,8 @@ impl ModuleGraph {
           let abs_path: String = resolved
             .abs_path
             .and_then(|f| {
+              // Webpack support add query on file suffix e.g. import svg from "path/icon.svg?url"
+              // should clean path prevent unable to find real path on file system
               let p = clean_path(&f);
               return Some(p);
             })
