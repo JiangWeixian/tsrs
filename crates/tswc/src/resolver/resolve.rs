@@ -139,7 +139,7 @@ impl Resolver {
             });
           }
           _ => {
-            println!("Error: {error}");
+            println!("Error: {error}, {:?} {}", path, &specifier);
             return Some(ResolvedSpecifier {
               abs_path: None,
               relative_path: None,

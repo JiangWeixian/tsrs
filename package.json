@@ -4,7 +4,10 @@
   "private": true,
   "packageManager": "pnpm@9.3.0",
   "description": "",
-  "keywords": ["typescript", "swc"],
+  "keywords": [
+    "typescript",
+    "swc"
+  ],
   "license": "MIT",
   "author": "JW",
   "napi": {
@@ -30,9 +33,9 @@
     "ci:snapshot": "pnpm changeset version --snapshot snapshot",
     "ci:prerelease": "pnpm changeset publish --no-git-tag --snapshot",
     "lint:fix": "eslint . --fix",
-    "build:all": "run-s build:*",
+    "build": "run-s build:*",
     "build:rust": "cargo build",
-    "build": "pnpm --filter=./crates/binding_node run build",
+    "build:node": "pnpm --filter=./crates/binding_node run build",
     "prepare": "husky install"
   },
   "lint-staged": {

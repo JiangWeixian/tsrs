@@ -71,10 +71,12 @@ impl Module {
     if self.built_in || self.is_node_modules || self.not_found {
       return Some(self.specifier.clone());
     }
+    if !self.is_script {
+        return Some(self.v_relative_path.clone())
+    }
     let path = self
       .v_relative_path
       .as_path()
-      .with_extension("")
       .with_extension("js");
     path.to_str().map(|f| f.to_string())
   }
