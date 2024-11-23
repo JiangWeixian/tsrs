@@ -108,7 +108,7 @@ jobs:
           version: 0.10.0
 
       - name: Install npm deps
-        run: pnpm i
+        run: pnpm install --frozen-lockfile=false
 
       - name: Cache cargo registry
         uses: actions/cache@v3
@@ -173,7 +173,7 @@ jobs:
         with:
           node-version: ${{ matrix.node }}
       - name: Install deps
-        run: pnpm i
+        run: pnpm install --frozen-lockfile=false
       - name: Download artifacts
         uses: actions/download-artifact@v3
         with:
@@ -209,7 +209,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/${{ env.APP_NAME }} -w /${{ env.APP_NAME }} node:${{ matrix.node }}-slim sh -c "npm i -g pnpm@9 && pnpm i && pnpm test"
+        run: docker run --rm -v $(pwd):/${{ env.APP_NAME }} -w /${{ env.APP_NAME }} node:${{ matrix.node }}-slim sh -c "npm i -g pnpm@9 && pnpm install --frozen-lockfile=false && pnpm test"
 
   test-linux-x64-musl-binding:
     name: Test bindings on x86_64-unknown-linux-musl - node@${{ matrix.node }}
@@ -235,7 +235,7 @@ jobs:
         run: ls -R .
         shell: bash
       - name: Test bindings
-        run: docker run --rm -v $(pwd):/${{ env.APP_NAME }} -w /${{ env.APP_NAME }} node:${{ matrix.node }}-alpine sh -c "npm i -g pnpm@9 && pnpm i && pnpm test"
+        run: docker run --rm -v $(pwd):/${{ env.APP_NAME }} -w /${{ env.APP_NAME }} node:${{ matrix.node }}-alpine sh -c "npm i -g pnpm@9 && pnpm install --frozen-lockfile=false && pnpm test"
 
   test-linux-aarch64-musl-binding:
     name: Test bindings on aarch64-unknown-linux-musl - node@${{ matrix.node }}
