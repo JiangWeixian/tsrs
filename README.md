@@ -3,7 +3,8 @@
 ## MVP
 
 - [x] napi
+- [ ] barrel
 
 ## Bugs
 
-- [ ] should keep original file name like `*.module.scss` `*.svg`, etc... Currently, tswc will remove it and replace with `.js`
+- [x] should keep original file name like `*.module.scss` `*.svg`, etc... Currently, tswc will remove it and replace with `.js`

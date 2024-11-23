@@ -139,7 +139,12 @@ impl Resolver {
             });
           }
           _ => {
-            println!("Error: {error}, {:?} {}", path, &specifier);
+            // TODO: should report it?
+            debug!(
+              target: "tswc",
+              "resolve failed from {:?} for {:?}",
+              path, &specifier
+            );
             return Some(ResolvedSpecifier {
               abs_path: None,
               relative_path: None,
