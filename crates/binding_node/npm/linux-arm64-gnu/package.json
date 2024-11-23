@@ -1,5 +1,5 @@
 {
-  "name": "ts-swc-linux-arm64-gnu",
+  "name": "@tsrs/core-linux-arm64-gnu",
   "version": "0.0.0",
   "os": ["linux"],
   "cpu": ["arm64"],
@@ -7,7 +7,7 @@
   "engines": {
     "node": ">= 10"
   },
-  "files": ["ts-swc.linux-arm64-gnu.node"],
-  "main": "ts-swc.linux-arm64-gnu.node",
+  "files": ["tsrs.linux-arm64-gnu.node"],
+  "main": "tsrs.linux-arm64-gnu.node",
   "libc": ["glibc"]
 }

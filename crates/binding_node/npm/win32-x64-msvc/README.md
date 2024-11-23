@@ -1,3 +1,3 @@
-# `ts-swc-win32-x64-msvc`
+# `tsrs-win32-x64-msvc`
 
-This is the **x86_64-pc-windows-msvc** binary for `ts-swc`
+This is the **x86_64-pc-windows-msvc** binary for `tsrs`

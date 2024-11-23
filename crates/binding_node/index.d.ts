@@ -5,5 +5,9 @@
 
 export interface TransformOptions {
   root: string
+  output?: string
+  externals?: Array<string>
+  exclude?: Array<string>
+  modules?: Array<string>
 }
 export declare function transform(options: TransformOptions): void
