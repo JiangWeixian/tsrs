@@ -66,7 +66,9 @@ pub struct Module {
   /// see defines in barrel_visitor
   pub export_map: Vec<(String, String, String)>,
   /// see defines in barrel_visitor
-  pub export_wildcard: Vec<String>
+  pub export_wildcard: Vec<String>,
+  /// has export star
+  pub is_wildcard: bool
 }
 
 impl Module {
@@ -110,7 +112,14 @@ impl ModuleGraph {
     let mut module = self.modules.get_mut(key);
     if let Some(m) = module {
       m.export_map = export_map;
-      m.export_wildcard = export_wildcards;
+      m.export_wildcard = export_wildcards.clone();
+    }
+    // Create modules and export_wildcards
+    for specifier in export_wildcards {
+      let mut module = self.resolve_module(Some(specifier), key.to_string());
+      if let Some(m) = &mut module {
+        m.is_wildcard = true
+      }
     }
   }
   pub fn resolve_entry_module(&mut self, specifier: Option<String>) -> Option<Module> {
