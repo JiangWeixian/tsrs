@@ -5,4 +5,4 @@ mod transform;
 pub use assets::Assets;
 pub use compiler::SwcCompiler;
 pub use module_graph::{Module, ModuleGraph};
-pub use transform::compile;
+pub use transform::{compile, optimize};

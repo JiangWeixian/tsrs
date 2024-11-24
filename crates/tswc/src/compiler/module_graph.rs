@@ -63,6 +63,10 @@ pub struct Module {
   pub v_abs_path: String,
   /// Relative path relative to v_abs_path
   pub v_relative_path: String,
+  /// see defines in barrel_visitor
+  pub export_map: Vec<(String, String, String)>,
+  /// see defines in barrel_visitor
+  pub export_wildcard: Vec<String>
 }
 
 impl Module {
@@ -100,6 +104,13 @@ impl ModuleGraph {
   pub fn add_module(&mut self, abs_path: &str, module: Module) {
     if !self.modules.contains_key(abs_path) {
       self.modules.insert(abs_path.into(), module);
+    }
+  }
+  pub fn insert_exports_info(&mut self, key: &str, export_map: Vec<(String, String, String)>, export_wildcards: Vec<String>) {
+    let mut module = self.modules.get_mut(key);
+    if let Some(m) = module {
+      m.export_map = export_map;
+      m.export_wildcard = export_wildcards;
     }
   }
   pub fn resolve_entry_module(&mut self, specifier: Option<String>) -> Option<Module> {
