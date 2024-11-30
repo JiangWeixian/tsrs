@@ -48,7 +48,7 @@ pub fn transform(options: TransformOptions) {
   debug!(target: "tswc", "files {:?}", files);
   for path in files {
     let resource_path = path.as_path().absolutize();
-    mg.resolve_entry_module(Some(resource_path.to_str().unwrap_or_default().to_string()));
+    mg.resolve_entry_module(Some(resource_path.to_str().unwrap_or_default().to_string()), None);
   }
   while mg.get_unused_modules_size() != 0 {
     let paths_to_compile: Vec<_> = mg
@@ -124,14 +124,15 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
       let resolved_package_entry = mg.resolver.resolve_module(&package, root.to_str().unwrap());
       if let Some(resolved_package_entry_path) = resolved_package_entry {
           println!("resolved_package_entry_path.abs_path: {:?}", resolved_package_entry_path.abs_path);
-          mg.resolve_entry_module(resolved_package_entry_path.abs_path);
+          mg.resolve_entry_module(resolved_package_entry_path.abs_path, Some(true));
       }
     }
-    while mg.get_unused_modules_size() != 0 {
+    while mg.get_wildcard_modules_size() != 0 {
+      println!("mg.get_wildcard_modules_size() {}", mg.get_wildcard_modules_size());
       let paths_to_compile: Vec<_> = mg
-        .get_unused_modules()
+        .get_wildcard_modules()
         .map(|decl| {
-          decl.used = true;
+          decl.optimized = true;
           debug!(
               target: "tswc",
               "compile! {:?}", &decl.abs_path

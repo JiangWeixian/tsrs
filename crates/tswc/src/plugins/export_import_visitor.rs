@@ -49,7 +49,7 @@ impl<'a> ImportExportVisitor<'a> {
 
 // import
 impl<'a> ImportExportVisitor<'a> {
-  fn add_import(&mut self, import: ImportSpecifier) -> Option<Module> {
+  fn add_import(&mut self, import: ImportSpecifier) -> Option<&mut Module> {
     let specifier = import.src.clone();
     debug!(target: "tswc", "add import {:?} {:?}", specifier, self.context);
     self.imports.push(import);
@@ -161,7 +161,7 @@ impl<'a> ImportExportVisitor<'a> {
 
 // export
 impl<'a> ImportExportVisitor<'a> {
-  fn add_export(&mut self, export: ExportSpecifier) -> Option<Module> {
+  fn add_export(&mut self, export: ExportSpecifier) -> Option<&mut Module> {
     let specifier = export.src.clone();
     self.exports.push(export);
     let m = self
@@ -184,7 +184,7 @@ impl<'a> ImportExportVisitor<'a> {
     &mut self,
     specifier: &ast::ExportSpecifier,
     export_named: &mut ast::NamedExport,
-  ) -> (bool, Option<Module>) {
+  ) -> (bool, Option<&mut Module>) {
     match specifier {
       ast::ExportSpecifier::Named(named) => {
         // skip type
@@ -287,18 +287,19 @@ impl<'a> ImportExportVisitor<'a> {
     }
 
     let mut is_need_add_import = false;
-    let mut module: Option<Module> = None;
+    let mut resolved_src: Option<String> = None;
     let specifiers = &export.specifiers.clone();
     for specifier in specifiers {
       let (need_add_import, m) = self.parse_export_spec(specifier, export);
-      if module.is_none() {
-        module = m;
+      if resolved_src.is_none() {
+        resolved_src = m.and_then(|f| f.with_ext());
       }
       if need_add_import && !is_need_add_import {
         is_need_add_import = true;
       }
     }
-    if let Some(v) = module.and_then(|f| f.with_ext()) {
+
+    if let Some(v) = resolved_src {
       export.src = Some(Box::new(ast::Str::from(v)));
     }
     return is_need_add_import;

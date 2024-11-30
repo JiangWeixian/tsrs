@@ -1,4 +1,5 @@
 use log::debug;
+use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
@@ -63,12 +64,14 @@ pub struct Module {
   pub v_abs_path: String,
   /// Relative path relative to v_abs_path
   pub v_relative_path: String,
+  /// is current module is optimized
+  pub optimized: bool,
   /// see defines in barrel_visitor
   pub export_map: Vec<(String, String, String)>,
   /// see defines in barrel_visitor
   pub export_wildcard: Vec<String>,
   /// has export star
-  pub is_wildcard: bool
+  pub is_wildcard: bool,
 }
 
 impl Module {
@@ -78,12 +81,9 @@ impl Module {
       return Some(self.specifier.clone());
     }
     if !self.is_script {
-        return Some(self.v_relative_path.clone())
+      return Some(self.v_relative_path.clone());
     }
-    let path = self
-      .v_relative_path
-      .as_path()
-      .with_extension("js");
+    let path = self.v_relative_path.as_path().with_extension("js");
     path.to_str().map(|f| f.to_string())
   }
 }
@@ -103,26 +103,40 @@ impl ModuleGraph {
       config,
     }
   }
-  pub fn add_module(&mut self, abs_path: &str, module: Module) {
+  pub fn add_module(&mut self, abs_path: &str, module: Module) -> Option<&mut Module> {
     if !self.modules.contains_key(abs_path) {
       self.modules.insert(abs_path.into(), module);
+      self.modules.get_mut(abs_path)
+    } else {
+      self.modules.get_mut(abs_path)
     }
   }
-  pub fn insert_exports_info(&mut self, key: &str, export_map: Vec<(String, String, String)>, export_wildcards: Vec<String>) {
-    let mut module = self.modules.get_mut(key);
+  pub fn insert_exports_info(
+    &mut self,
+    key: &str,
+    export_map: Vec<(String, String, String)>,
+    export_wildcards: Vec<String>,
+  ) {
+    let module = self.modules.get_mut(key);
+    // TODO: maybe should create export_map instance for further get matches
     if let Some(m) = module {
       m.export_map = export_map;
       m.export_wildcard = export_wildcards.clone();
     }
     // Create modules and export_wildcards
     for specifier in export_wildcards {
-      let mut module = self.resolve_module(Some(specifier), key.to_string());
-      if let Some(m) = &mut module {
-        m.is_wildcard = true
+      let module = self.resolve_module(Some(specifier), key.to_string());
+      if let Some(m) = module {
+        m.is_wildcard = true;
+        println!("self.m {:?}", m);
       }
     }
   }
-  pub fn resolve_entry_module(&mut self, specifier: Option<String>) -> Option<Module> {
+  pub fn resolve_entry_module(
+    &mut self,
+    specifier: Option<String>,
+    is_wildcard: Option<bool>,
+  ) -> Option<&mut Module> {
     if let Some(sp) = specifier {
       let abs_path = {
         let path = sp.as_path().absolutize();
@@ -138,15 +152,20 @@ impl ModuleGraph {
         abs_path: String::from(&abs_path),
         is_entry: true,
         is_script: SCRIPT_RE.is_match(&abs_path),
+        is_wildcard: is_wildcard.unwrap_or(false),
         ..Default::default()
       };
-      self.add_module(&abs_path, m.clone());
-      Some(m)
+      self.add_module(&abs_path, m)
     } else {
       None
     }
   }
-  pub fn resolve_module(&mut self, specifier: Option<String>, context: String) -> Option<Module> {
+  /// Also add resolved module into self.modules
+  pub fn resolve_module(
+    &mut self,
+    specifier: Option<String>,
+    context: String,
+  ) -> Option<&mut Module> {
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
     // TODO: should skip resolve if specifier and context found in module graph
@@ -210,9 +229,10 @@ impl ModuleGraph {
             built_in: resolved.built_in,
             ..Default::default()
           };
-          // TODO: fix unwrap
-          self.add_module(&abs_path, m.clone());
-          Some(m)
+          // FIXME: if abs_path releated is already inserted; self.add_module take no effect
+          // modify m after resolve_module will not working on self.modules[abs_path]
+          // and cloned module here, it mean m !== self.modules[abs_path]
+          self.add_module(&abs_path, m)
         }
         None => None,
       };
@@ -232,5 +252,20 @@ impl ModuleGraph {
       .filter(|f| !f.used)
       .collect();
     modules.len()
+  }
+  pub fn get_wildcard_modules_size(&self) -> usize {
+    let modules: Vec<&Module> = self
+      .modules
+      .values()
+      .into_iter()
+      .filter(|f| f.is_wildcard && !f.optimized)
+      .collect();
+    modules.len()
+  }
+  pub fn get_wildcard_modules(&mut self) -> impl Iterator<Item = &mut Module> {
+    self
+      .modules
+      .values_mut()
+      .filter(|module| module.is_wildcard && !module.optimized)
   }
 }
