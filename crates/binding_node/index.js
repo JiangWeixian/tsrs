@@ -310,7 +310,6 @@ if (!nativeBinding) {
   throw new Error(`Failed to load native binding`)
 }
 
-const { transform, preOptimize } = nativeBinding
+const { transform } = nativeBinding
 
 module.exports.transform = transform
-module.exports.preOptimize = preOptimize

@@ -5,7 +5,10 @@
   "engines": {
     "node": ">=16"
   },
-  "files": ["index.d.ts", "index.js"],
+  "files": [
+    "index.d.ts",
+    "index.js"
+  ],
   "main": "index.js",
   "types": "index.d.ts",
   "napi": {
@@ -27,7 +30,7 @@
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
     "test": "ava",
-    "test:e2e": "node ./scripts/test_barrel.js"
+    "test:e2e": "node ./scripts/test.js"
   },
   "optionalDependencies": {
     "tsrs-darwin-arm64": "workspace:*",

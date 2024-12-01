@@ -140,7 +140,7 @@ impl ModuleGraph {
   ) {
     let mut resolved_export_map = vec![];
     for (name, specifier, orig) in export_map {
-      let module = self.resolve_esm_module(Some(specifier), key.to_string());
+      let module = self.resolve_esm_module(Some(specifier), key.to_string(), None);
       if let Some(m) = module {
         resolved_export_map.push((name.clone(), m.abs_path.clone(), orig.clone()));
       }
@@ -148,7 +148,7 @@ impl ModuleGraph {
     let mut resolved_export_wildcards = vec![];
     // Create wildcard module
     for specifier in export_wildcards {
-      let module = self.resolve_esm_module(Some(specifier), key.to_string());
+      let module = self.resolve_esm_module(Some(specifier), key.to_string(), None);
       if let Some(m) = module {
         m.is_wildcard = true;
         resolved_export_wildcards.push(m.abs_path.clone());
@@ -201,6 +201,7 @@ impl ModuleGraph {
     &mut self,
     specifier: Option<String>,
     context: String,
+    is_wildcard: Option<bool>,
   ) -> Option<&mut Module> {
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
@@ -263,6 +264,7 @@ impl ModuleGraph {
             is_node_modules: resolved.is_node_modules,
             not_found: resolved.not_found,
             built_in: resolved.built_in,
+            is_wildcard: is_wildcard.unwrap_or(false),
             ..Default::default()
           };
           // FIXME: if abs_path releated is already inserted; self.add_module take no effect
