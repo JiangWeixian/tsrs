@@ -6,7 +6,7 @@ use swc_core::ecma::ast::{
 };
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
-use crate::compiler::{Module, ModuleGraph};
+use crate::compiler::{Module, ModuleGraph, ResolveModuleOptions};
 use crate::utils::{ExportSpecifier, ImportSpecifier, ImportType};
 use lazy_static::lazy_static;
 
@@ -53,9 +53,11 @@ impl<'a> ImportExportVisitor<'a> {
     let specifier = import.src.clone();
     debug!(target: "tswc", "add import {:?} {:?}", specifier, self.context);
     self.imports.push(import);
-    let m = self
-      .module_graph
-      .resolve_module(specifier, self.context.clone());
+    let m = self.module_graph.resolve_module(ResolveModuleOptions {
+      specifier,
+      context: self.context.clone(),
+      ..Default::default()
+    });
     m
   }
 
@@ -164,9 +166,11 @@ impl<'a> ImportExportVisitor<'a> {
   fn add_export(&mut self, export: ExportSpecifier) -> Option<&mut Module> {
     let specifier = export.src.clone();
     self.exports.push(export);
-    let m = self
-      .module_graph
-      .resolve_module(specifier, self.context.clone());
+    let m = self.module_graph.resolve_module(ResolveModuleOptions {
+      specifier,
+      context: self.context.clone(),
+      ..Default::default()
+    });
     m
   }
 

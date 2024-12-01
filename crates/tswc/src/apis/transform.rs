@@ -1,11 +1,10 @@
-use crate::compiler::{compile, optimize, Assets, ModuleGraph};
+use crate::compiler::{compile, optimize, Assets, ModuleGraph, ResolveModuleOptions};
 use crate::config::{Config, ConfigOptions};
-use crate::resolver::{Resolver, ResolverOptions};
+use crate::resolver::{Format, Resolver, ResolverOptions};
 use log::debug;
 use napi_derive::napi;
 use sugar_path::SugarPath;
 
-/// TODO: remove PreOptimizeOptions
 pub struct PreOptimizeOptions<'a> {
   pub root: String,
   /// Pre optimized packages
@@ -20,24 +19,31 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
     mut mg,
   } = options;
   for package in packages {
-    mg.resolve_esm_module(Some(package), root.clone(), Some(true));
+    mg.resolve_module(ResolveModuleOptions {
+      specifier: Some(package),
+      context: root.clone(),
+      is_wildcard: Some(true),
+      format: Some(Format::ESM),
+    });
   }
   while mg.get_wildcard_modules_size() != 0 {
     println!(
       "mg.get_wildcard_modules_size() {}",
       mg.get_wildcard_modules_size()
     );
-    let paths_to_compile: Vec<_> = mg
-      .get_wildcard_modules()
-      .map(|decl| {
-        decl.optimized = true;
-        debug!(
-            target: "tswc",
-            "optimize! {:?}", &decl.abs_path
-        );
-        (decl.abs_path.clone(), decl.is_script)
-      })
-      .collect();
+    let paths_to_compile: Vec<_> = {
+      let unused_modules = mg.get_wildcard_modules();
+      unused_modules
+        .map(|decl| {
+          decl.optimized = true;
+          debug!(
+              target: "tswc",
+              "optimize! {:?}", &decl.abs_path
+          );
+          (decl.abs_path.clone(), decl.is_script)
+        })
+        .collect()
+    };
     for (resolved_path, is_script) in paths_to_compile {
       if is_script {
         let result = optimize(&resolved_path, &mut mg);

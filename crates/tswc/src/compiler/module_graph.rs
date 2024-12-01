@@ -5,7 +5,7 @@ use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
 
 use crate::config::Config;
-use crate::resolver::Resolver;
+use crate::resolver::{Format, Resolver};
 use crate::utils::{QUERY_RE, SCRIPT_RE};
 
 fn common_path_prefix(p1: &Path, p2: &Path) -> PathBuf {
@@ -57,6 +57,14 @@ fn get_matches(
       }
     }
   }
+}
+
+#[derive(Default, Clone, Debug)]
+pub struct ResolveModuleOptions {
+  pub specifier: Option<String>,
+  pub context: String,
+  pub is_wildcard: Option<bool>,
+  pub format: Option<Format>,
 }
 
 #[derive(Default, Clone, Debug)]
@@ -138,9 +146,15 @@ impl ModuleGraph {
     export_map: Vec<(String, String, String)>,
     export_wildcards: Vec<String>,
   ) {
+    /// set_exports_info used for optimize packages, use mjs resolver by default(Format::ESM)
     let mut resolved_export_map = vec![];
     for (name, specifier, orig) in export_map {
-      let module = self.resolve_esm_module(Some(specifier), key.to_string(), None);
+      let module = self.resolve_module(ResolveModuleOptions {
+        specifier: Some(specifier),
+        context: key.to_string(),
+        is_wildcard: None,
+        format: Some(Format::ESM),
+      });
       if let Some(m) = module {
         resolved_export_map.push((name.clone(), m.abs_path.clone(), orig.clone()));
       }
@@ -148,7 +162,12 @@ impl ModuleGraph {
     let mut resolved_export_wildcards = vec![];
     // Create wildcard module
     for specifier in export_wildcards {
-      let module = self.resolve_esm_module(Some(specifier), key.to_string(), None);
+      let module = self.resolve_module(ResolveModuleOptions {
+        specifier: Some(specifier),
+        context: key.to_string(),
+        is_wildcard: None,
+        format: Some(Format::ESM),
+      });
       if let Some(m) = module {
         m.is_wildcard = true;
         resolved_export_wildcards.push(m.abs_path.clone());
@@ -196,18 +215,19 @@ impl ModuleGraph {
       None
     }
   }
-  /// Should merge resolve_esm_module & resolve_module into one
-  pub fn resolve_esm_module(
-    &mut self,
-    specifier: Option<String>,
-    context: String,
-    is_wildcard: Option<bool>,
-  ) -> Option<&mut Module> {
+  /// Also add resolved module into self.modules
+  pub fn resolve_module(&mut self, options: ResolveModuleOptions) -> Option<&mut Module> {
+    let ResolveModuleOptions {
+      specifier,
+      context,
+      is_wildcard,
+      format,
+    } = options;
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
     // TODO: should skip resolve if specifier and context found in module graph
     if let Some(sp) = specifier {
-      let module = match self.resolver.resolve_module(&sp, &context) {
+      let module = match self.resolver.resolve(&sp, &context, format) {
         Some(resolved) => {
           let abs_path: String = resolved
             .abs_path
@@ -265,87 +285,6 @@ impl ModuleGraph {
             not_found: resolved.not_found,
             built_in: resolved.built_in,
             is_wildcard: is_wildcard.unwrap_or(false),
-            ..Default::default()
-          };
-          // FIXME: if abs_path releated is already inserted; self.add_module take no effect
-          // modify m after resolve_module will not working on self.modules[abs_path]
-          // and cloned module here, it mean m !== self.modules[abs_path]
-          self.add_module(&abs_path, m)
-        }
-        None => None,
-      };
-      module
-    } else {
-      None
-    }
-  }
-  /// Also add resolved module into self.modules
-  pub fn resolve_module(
-    &mut self,
-    specifier: Option<String>,
-    context: String,
-  ) -> Option<&mut Module> {
-    // TODO: currently we resolve and add every module during compile
-    // should we only resolve and add every module config in paths
-    // TODO: should skip resolve if specifier and context found in module graph
-    if let Some(sp) = specifier {
-      let module = match self.resolver.resolve(&sp, &context) {
-        Some(resolved) => {
-          let abs_path: String = resolved
-            .abs_path
-            .and_then(|f| {
-              // Webpack support add query on file suffix e.g. import svg from "path/icon.svg?url"
-              // should clean path prevent unable to find real path on file system
-              let p = clean_path(&f);
-              return Some(p);
-            })
-            .unwrap_or("".into());
-          let v_abs_path = replace_common_prefix(
-            abs_path.as_path(),
-            &self.config.resolved_options.input.as_path(),
-            &self.config.resolved_options.output.as_path(),
-          );
-          let relative_path = resolved.relative_path;
-          let context = resolved.context;
-          let v_context = context.clone().and_then(|f| {
-            Some(replace_common_prefix(
-              &f.as_path(),
-              &self.config.resolved_options.input.as_path(),
-              &self.config.resolved_options.output.as_path(),
-            ))
-          });
-          let v_relative_path = {
-            let relative_path = v_abs_path
-              .as_path()
-              .relative(v_context.clone().unwrap_or_default().as_path());
-            let relative_path = relative_path.to_str();
-            relative_path.map(|f| {
-              if f.starts_with(".") {
-                f.to_string()
-              } else {
-                format!("./{}", f)
-              }
-            })
-          };
-          let is_script = SCRIPT_RE.is_match(&abs_path);
-          debug!(
-            target: "tswc",
-            "abs_path {:?} v_abs_path {:?} is_script {:?}",
-            abs_path, v_abs_path, is_script
-          );
-          let m = Module {
-            specifier: sp,
-            context: context.unwrap_or_default(),
-            is_script,
-            abs_path: abs_path.clone(),
-            v_abs_path: v_abs_path.into(),
-            relative_path: relative_path.unwrap_or_default(),
-            v_relative_path: v_relative_path.unwrap_or_default(),
-            // TODO: maybe renamed to skip compile
-            used: resolved.built_in || resolved.is_node_modules || resolved.not_found,
-            is_node_modules: resolved.is_node_modules,
-            not_found: resolved.not_found,
-            built_in: resolved.built_in,
             ..Default::default()
           };
           // FIXME: if abs_path releated is already inserted; self.add_module take no effect
