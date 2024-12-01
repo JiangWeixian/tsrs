@@ -52,7 +52,9 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
     }
   }
   let mappings = mg.get_mappings("@mui/material");
-  println!("mappings {:?}", mappings.get("Accordion"))
+  if let Some(mappings) = mappings {
+    println!("mappings {:?}", mappings.get("Accordion"))
+  }
 }
 
 #[napi(object)]
@@ -93,6 +95,7 @@ pub fn transform(options: TransformOptions) {
     root,
     output,
     exclude,
+    packages: packages.clone(),
   };
   let mut config = Config::new(config_options);
   config.resolve_options(&tsconfig_path);

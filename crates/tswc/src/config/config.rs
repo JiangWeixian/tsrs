@@ -10,6 +10,7 @@ pub struct ConfigOptions {
   pub output: Option<String>,
   pub root: PathBuf,
   pub exclude: Option<Vec<String>>,
+  pub packages: Vec<String>,
 }
 
 impl Default for ConfigOptions {
@@ -18,6 +19,7 @@ impl Default for ConfigOptions {
       output: None,
       root: PathBuf::default(),
       exclude: None,
+      packages: Default::default(),
     }
   }
 }
@@ -28,6 +30,7 @@ pub struct ResolvedConfigOptions {
   pub output: PathBuf,
   pub root: PathBuf,
   pub exclude: Vec<String>,
+  pub packages: Vec<String>,
 }
 
 #[derive(Default, Debug)]
@@ -36,6 +39,7 @@ pub struct Config {
   pub resolved_options: ResolvedConfigOptions,
   pub files: Vec<PathBuf>,
   pub tsconfig: Option<TsConfig>,
+  pub packages: Vec<String>,
 }
 
 impl Config {
@@ -85,6 +89,7 @@ impl Config {
       output,
       exclude,
       root: self.options.root.clone(),
+      packages: self.options.packages.clone(),
     };
     self.resolved_options = resolved_options;
   }

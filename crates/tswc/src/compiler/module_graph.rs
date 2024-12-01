@@ -122,6 +122,7 @@ pub struct ModuleGraph {
   pub modules: HashMap<String, Module>,
   pub resolver: Resolver,
   pub config: Config,
+  pub export_map: HashMap<String, HashMap<String, (String, String)>>,
 }
 
 impl ModuleGraph {
@@ -130,6 +131,7 @@ impl ModuleGraph {
       modules: Default::default(),
       resolver,
       config,
+      export_map: Default::default(),
     }
   }
   pub fn add_module(&mut self, abs_path: &str, module: Module) -> Option<&mut Module> {
@@ -180,12 +182,25 @@ impl ModuleGraph {
       m.export_wildcard = resolved_export_wildcards;
     }
   }
-  // TODO: should save the result to self.export_map
-  pub fn get_mappings(&self, specifier: &str) -> HashMap<String, (String, String)> {
+  pub fn get_mappings(&mut self, specifier: &str) -> Option<&HashMap<String, (String, String)>> {
+    if !self
+      .config
+      .resolved_options
+      .packages
+      .contains(&specifier.to_string())
+    {
+      return None;
+    }
+    if self.export_map.contains_key(specifier) {
+      return self.export_map.get(specifier);
+    };
     let mut export_map = HashMap::new();
     let module = self.get_module_by_specifier(specifier);
     get_matches(module, self, &mut export_map);
-    return export_map;
+    if !self.export_map.contains_key(specifier) {
+      self.export_map.insert(specifier.to_string(), export_map);
+    }
+    return self.export_map.get(specifier);
   }
   pub fn resolve_entry_module(
     &mut self,
