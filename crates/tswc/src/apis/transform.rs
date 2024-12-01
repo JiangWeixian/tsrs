@@ -27,6 +27,7 @@ pub fn transform(options: TransformOptions) {
     exclude,
     modules,
   } = options;
+  let root_string = root.clone();
   let root = root.as_path().absolutize();
   let tsconfig_path = root.join("tsconfig.json");
   let resolver = Resolver::new(ResolverOptions {
@@ -48,7 +49,10 @@ pub fn transform(options: TransformOptions) {
   debug!(target: "tswc", "files {:?}", files);
   for path in files {
     let resource_path = path.as_path().absolutize();
-    mg.resolve_entry_module(Some(resource_path.to_str().unwrap_or_default().to_string()), None);
+    mg.resolve_esm_module(
+      Some(resource_path.to_str().unwrap_or_default().to_string()),
+      root_string.clone(),
+    );
   }
   while mg.get_unused_modules_size() != 0 {
     let paths_to_compile: Vec<_> = mg
@@ -93,62 +97,66 @@ pub struct PreOptimizeOptions {
 }
 
 pub fn pre_optimize(options: PreOptimizeOptions) {
-    env_logger::init();
-    let assets = Assets::new();
-    let PreOptimizeOptions {
-      root,
-      externals,
-      exclude,
-      modules,
-      output,
-      packages
-    } = options;
-    let root = root.as_path().absolutize();
-    let tsconfig_path = root.join("tsconfig.json");
-    let resolver = Resolver::new(ResolverOptions {
-      externals: externals.unwrap_or(vec![]),
-      modules: modules.unwrap_or(vec!["node_modules".into()]),
-      tsconfig: tsconfig_path.clone(),
-    });
-    debug!(target: "tswc", "root {:?}", root);
-    let config_options = ConfigOptions {
-      root: root.clone(),
-      output,
-      exclude,
-    };
-    let mut config = Config::new(config_options);
-    config.resolve_options(&tsconfig_path);
-    let files = config.files.clone();
-    let mut mg = ModuleGraph::new(resolver, config);
-    for package in packages {
-      let resolved_package_entry = mg.resolver.resolve_module(&package, root.to_str().unwrap());
-      if let Some(resolved_package_entry_path) = resolved_package_entry {
-          println!("resolved_package_entry_path.abs_path: {:?}", resolved_package_entry_path.abs_path);
-          mg.resolve_entry_module(resolved_package_entry_path.abs_path, Some(true));
+  env_logger::init();
+  let assets = Assets::new();
+  let PreOptimizeOptions {
+    root,
+    externals,
+    exclude,
+    modules,
+    output,
+    packages,
+  } = options;
+  let root = root.as_path().absolutize();
+  let tsconfig_path = root.join("tsconfig.json");
+  let resolver = Resolver::new(ResolverOptions {
+    externals: externals.unwrap_or(vec![]),
+    modules: modules.unwrap_or(vec!["node_modules".into()]),
+    tsconfig: tsconfig_path.clone(),
+  });
+  debug!(target: "tswc", "root {:?}", root);
+  let config_options = ConfigOptions {
+    root: root.clone(),
+    output,
+    exclude,
+  };
+  let mut config = Config::new(config_options);
+  config.resolve_options(&tsconfig_path);
+  let files = config.files.clone();
+  let mut mg = ModuleGraph::new(resolver, config);
+  for package in packages {
+    let resolved_package_entry = mg.resolver.resolve_module(&package, root.to_str().unwrap());
+    if let Some(resolved_package_entry_path) = resolved_package_entry {
+      println!(
+        "resolved_package_entry_path.abs_path: {:?}",
+        resolved_package_entry_path.abs_path
+      );
+      mg.resolve_entry_module(resolved_package_entry_path.abs_path, Some(true));
+    }
+  }
+  while mg.get_wildcard_modules_size() != 0 {
+    println!(
+      "mg.get_wildcard_modules_size() {}",
+      mg.get_wildcard_modules_size()
+    );
+    let paths_to_compile: Vec<_> = mg
+      .get_wildcard_modules()
+      .map(|decl| {
+        decl.optimized = true;
+        debug!(
+            target: "tswc",
+            "compile! {:?}", &decl.abs_path
+        );
+        (decl.abs_path.clone(), decl.is_script)
+      })
+      .collect();
+    for (resolved_path, is_script) in paths_to_compile {
+      if is_script {
+        let result = optimize(&resolved_path, &mut mg);
+      } else {
       }
     }
-    while mg.get_wildcard_modules_size() != 0 {
-      println!("mg.get_wildcard_modules_size() {}", mg.get_wildcard_modules_size());
-      let paths_to_compile: Vec<_> = mg
-        .get_wildcard_modules()
-        .map(|decl| {
-          decl.optimized = true;
-          debug!(
-              target: "tswc",
-              "compile! {:?}", &decl.abs_path
-          );
-          (
-            decl.abs_path.clone(),
-            decl.is_script,
-          )
-        })
-        .collect();
-      for (resolved_path, is_script) in paths_to_compile {
-        if is_script {
-          let result = optimize(&resolved_path, &mut mg);
-          println!("exports_map {:?}", mg.modules.get(&resolved_path));
-        } else {
-        }
-      }
-    }
+  }
+  // println!("exports_map {:?}", mg);
+  println!("exports_map {:?}", mg.get_mappings("/Users/jiangwei/projects/tswc/node_modules/.pnpm/@mui+material@5.16.7_@types+react@18.3.12_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@mui/material/index.js"));
 }
