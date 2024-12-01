@@ -158,5 +158,6 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
     }
   }
   // println!("exports_map {:?}", mg);
-  println!("exports_map {:?}", mg.get_mappings("/Users/jiangwei/projects/tswc/node_modules/.pnpm/@mui+material@5.16.7_@types+react@18.3.12_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@mui/material/index.js"));
+  let mappings = mg.get_mappings("/Users/jiangwei/projects/tswc/node_modules/.pnpm/@mui+material@5.16.7_@types+react@18.3.12_react-dom@18.3.1_react@18.3.1__react@18.3.1/node_modules/@mui/material/index.js");
+  println!("mappings {:?}", mappings.get("Accordion"))
 }

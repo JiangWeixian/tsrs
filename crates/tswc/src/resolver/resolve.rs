@@ -98,7 +98,7 @@ impl Resolver {
       exports_fields: vec![vec!["exports".into()]],
       // TODO: create esm resolver
       // TODO: create browser resolver
-      condition_names: vec!["node".into(), "import".into(), "require".into(),],
+      condition_names: vec!["node".into(), "import".into(), "require".into()],
       builtin_modules: true,
       main_fields: vec!["module".into()],
       symlinks: true,
@@ -206,6 +206,7 @@ impl Resolver {
       not_found: false,
     })
   }
+  /// Resolve with esm options
   // TODO: should merge with resolve fn into one, config cjs or mjs resolver by options.module?
   pub fn resolve_module(&self, specifier: &str, context: &str) -> Option<ResolvedSpecifier> {
     let path_str = find_up_dir(PathBuf::from(context));
