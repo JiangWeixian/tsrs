@@ -8,17 +8,17 @@ use sugar_path::SugarPath;
 pub struct PreOptimizeOptions<'a> {
   pub root: String,
   /// Pre optimized packages
-  pub packages: Vec<String>,
+  pub barrel_packages: Vec<String>,
   pub mg: &'a mut ModuleGraph,
 }
 
 pub fn pre_optimize(options: PreOptimizeOptions) {
   let PreOptimizeOptions {
     root,
-    packages,
+    barrel_packages,
     mut mg,
   } = options;
-  for package in packages {
+  for package in barrel_packages {
     mg.resolve_module(ResolveModuleOptions {
       specifier: Some(package),
       context: root.clone(),
@@ -68,7 +68,7 @@ pub struct TransformOptions {
   // TODO: should nested in resolve config
   pub modules: Option<Vec<String>>,
   /// Optimized packages
-  pub packages: Vec<String>,
+  pub barrel_packages: Vec<String>,
 }
 
 pub fn transform(options: TransformOptions) {
@@ -80,7 +80,7 @@ pub fn transform(options: TransformOptions) {
     externals,
     exclude,
     modules,
-    packages,
+    barrel_packages,
   } = options;
   let root_cloned = root.clone();
   let root = root.as_path().absolutize();
@@ -95,7 +95,7 @@ pub fn transform(options: TransformOptions) {
     root,
     output,
     exclude,
-    packages: packages.clone(),
+    barrel_packages: barrel_packages.clone(),
   };
   let mut config = Config::new(config_options);
   config.resolve_options(&tsconfig_path);
@@ -105,7 +105,7 @@ pub fn transform(options: TransformOptions) {
   debug!(target: "tswc", "files {:?}", files);
   pre_optimize(PreOptimizeOptions {
     root: root_cloned,
-    packages,
+    barrel_packages,
     mg: &mut mg,
   });
   for path in files {

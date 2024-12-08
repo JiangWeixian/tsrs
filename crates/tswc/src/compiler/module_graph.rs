@@ -186,7 +186,7 @@ impl ModuleGraph {
     if !self
       .config
       .resolved_options
-      .packages
+      .barrel_packages
       .contains(&specifier.to_string())
     {
       return None;

@@ -10,6 +10,6 @@ export interface TransformOptions {
   exclude?: Array<string>
   modules?: Array<string>
   /** Optimized packages */
-  packages: Array<string>
+  barrelPackages: Array<string>
 }
 export declare function transform(options: TransformOptions): void
