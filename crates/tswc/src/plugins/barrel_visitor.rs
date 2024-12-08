@@ -104,6 +104,8 @@ impl<'a> Barrel<'a> {
   }
 }
 
+/// Collect barrel packages specified and named exports info into module_graph
+/// and split single one barrel packages import series
 impl<'a> Fold for Barrel<'a> {
   fn fold_module_items(&mut self, items: Vec<ModuleItem>) -> Vec<ModuleItem> {
     let mut local_idents = HashMap::new();
