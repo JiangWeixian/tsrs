@@ -1,7 +1,7 @@
 use serde::Deserialize;
 use swc_core::common::DUMMY_SP;
+use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::{noop_fold_type, Fold};
-use swc_ecma_ast::*;
 
 #[derive(Clone, Debug, Deserialize)]
 pub struct Config {
@@ -11,6 +11,14 @@ pub struct Config {
 #[derive(Debug, Default)]
 pub struct NamedImportTransform {
   pub packages: Vec<String>,
+}
+
+impl NamedImportTransform {
+  pub fn new(config: Config) -> Self {
+    NamedImportTransform {
+      packages: config.packages,
+    }
+  }
 }
 
 impl Fold for NamedImportTransform {
@@ -119,11 +127,5 @@ impl Fold for NamedImportTransform {
     }
     module.body = new_items;
     module
-  }
-}
-
-pub fn named_import_transform(config: Config) -> impl Fold {
-  NamedImportTransform {
-    packages: config.packages,
   }
 }

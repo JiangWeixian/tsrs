@@ -1,4 +1,8 @@
-mod export_import_visitor;
 mod barrel_visitor;
-pub use export_import_visitor::ImportExportVisitor;
+mod export_import_visitor;
+mod named_import_transform_visitor;
 pub use barrel_visitor::{Barrel, Config as BarrelConfig};
+pub use export_import_visitor::ImportExportVisitor;
+pub use named_import_transform_visitor::{
+  Config as NamedImportTransformConfig, NamedImportTransform,
+};
