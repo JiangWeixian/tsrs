@@ -1,3 +1,4 @@
+use log::debug;
 use serde::Deserialize;
 use swc_core::common::DUMMY_SP;
 use swc_core::ecma::ast::*;
@@ -31,25 +32,30 @@ impl Fold for NamedImportTransform {
         ModuleItem::ModuleDecl(ModuleDecl::Import(decl)) => {
           let src_value = decl.src.value.clone();
           let mut skip_transform = false;
+          debug!(
+            target: "tswc",
+            "self.pages {:?}",
+            self.packages
+          );
           if self.packages.iter().any(|p| src_value == *p) {
+            debug!(
+              target: "tswc",
+              "self.named_imports src_value {:?}",
+              src_value
+            );
             for specifier in &decl.specifiers {
               match specifier {
                 ImportSpecifier::Named(specifier) => {
                   // Add the import name as string to the set
                   if let Some(imported) = &specifier.imported {
                     match imported {
-                      ModuleExportName::Ident(ident) => {
-                        let new_src = format!(
-                          "__barrel_optimize__?names={}!=!{}",
-                          ident.sym.to_string(),
-                          src_value
-                        );
+                      ModuleExportName::Ident(_) => {
                         let specifiers = ImportSpecifier::Named(specifier.clone());
                         let import = ImportDecl {
                           span: DUMMY_SP,
                           src: Box::new(Str {
                             span: DUMMY_SP,
-                            value: new_src.into(),
+                            value: src_value.clone().into(),
                             raw: None,
                           }),
                           type_only: false,
@@ -59,18 +65,13 @@ impl Fold for NamedImportTransform {
                         };
                         new_items.push(ModuleItem::ModuleDecl(ModuleDecl::Import(import)))
                       }
-                      ModuleExportName::Str(str_) => {
-                        let new_src = format!(
-                          "__barrel_optimize__?names={}!=!{}",
-                          str_.value.to_string(),
-                          src_value
-                        );
+                      ModuleExportName::Str(_) => {
                         let specifiers = ImportSpecifier::Named(specifier.clone());
                         let import = ImportDecl {
                           span: DUMMY_SP,
                           src: Box::new(Str {
                             span: DUMMY_SP,
-                            value: new_src.into(),
+                            value: src_value.clone().into(),
                             raw: None,
                           }),
                           type_only: false,
@@ -82,17 +83,12 @@ impl Fold for NamedImportTransform {
                       }
                     }
                   } else {
-                    let new_src = format!(
-                      "__barrel_optimize__?names={}!=!{}",
-                      specifier.local.sym.to_string(),
-                      src_value
-                    );
                     let specifiers = ImportSpecifier::Named(specifier.clone());
                     let import = ImportDecl {
                       span: DUMMY_SP,
                       src: Box::new(Str {
                         span: DUMMY_SP,
-                        value: new_src.into(),
+                        value: src_value.clone().into(),
                         raw: None,
                       }),
                       type_only: false,

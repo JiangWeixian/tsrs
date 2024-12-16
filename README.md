@@ -4,6 +4,8 @@
 
 - [x] napi
 - [ ] barrel
+  - [ ] split barrel packages import into series
+  - [ ] resolve from pre optimize mg first
 
 ## Bugs
 

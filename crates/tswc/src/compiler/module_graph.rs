@@ -1,5 +1,4 @@
 use log::debug;
-use std::borrow::BorrowMut;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use sugar_path::SugarPath;
@@ -238,10 +237,15 @@ impl ModuleGraph {
       is_wildcard,
       format,
     } = options;
+
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
     // TODO: should skip resolve if specifier and context found in module graph
     if let Some(sp) = specifier {
+      // is barrel optimize
+      if self.config.resolved_options.barrel_packages.contains(&sp) {
+        let mappings = self.get_mappings(&sp);
+      }
       let module = match self.resolver.resolve(&sp, &context, format) {
         Some(resolved) => {
           let abs_path: String = resolved

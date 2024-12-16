@@ -63,7 +63,7 @@ impl IntoOptions for TsConfig {
             tsconfig::Target::EsNext => EsVersion::EsNext,
             tsconfig::Target::Other(target) => match target.as_str() {
               "ES2021" => EsVersion::Es2021,
-              "ES2021" => EsVersion::Es2022,
+              "ES2022" => EsVersion::Es2022,
               _ => EsVersion::Es3,
             },
           };
