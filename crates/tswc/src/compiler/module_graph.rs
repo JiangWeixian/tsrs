@@ -47,10 +47,10 @@ fn get_matches(
       export_map.insert(name.clone(), (path.clone(), orig.clone()));
     }
     if !m.export_wildcard.is_empty() {
-      for specifier in &m.export_wildcard {
-        let module = mg.get_module_by_specifier(specifier);
+      for src in &m.export_wildcard {
+        let module = mg.get_module_by_src(src);
         // `if let some(...)` can prevent segmentation fault panic
-        if let Some(module) = mg.modules.get(specifier) {
+        if let Some(module) = mg.modules.get(src) {
           get_matches(Some(module), mg, export_map);
         }
       }
@@ -60,7 +60,7 @@ fn get_matches(
 
 #[derive(Default, Clone, Debug)]
 pub struct ResolveModuleOptions {
-  pub specifier: Option<String>,
+  pub src: Option<String>,
   pub context: String,
   pub is_wildcard: Option<bool>,
   pub format: Option<Format>,
@@ -69,7 +69,7 @@ pub struct ResolveModuleOptions {
 #[derive(Default, Clone, Debug)]
 pub struct Module {
   /// The imported named of the module
-  pub specifier: String,
+  pub src: String,
   /// The dir of current importee file
   pub context: String,
   /// is current module is compiled
@@ -84,7 +84,7 @@ pub struct Module {
   pub not_found: bool,
   /// input files from options.include
   pub is_entry: bool,
-  /// Resolved absolute filepath of specifier
+  /// Resolved absolute filepath of src
   pub abs_path: String,
   /// Relative path relative to abs_path
   pub relative_path: String,
@@ -106,7 +106,7 @@ impl Module {
   // TODO: support custom ext
   pub fn with_ext(&self) -> Option<String> {
     if self.built_in || self.is_node_modules || self.not_found {
-      return Some(self.specifier.clone());
+      return Some(self.src.clone());
     }
     if !self.is_script {
       return Some(self.v_relative_path.clone());
@@ -141,6 +141,7 @@ impl ModuleGraph {
       self.modules.get_mut(abs_path)
     }
   }
+  /// Set exported info from optimized packages. e.g barrel_packages
   pub fn set_exports_info(
     &mut self,
     key: &str,
@@ -149,9 +150,9 @@ impl ModuleGraph {
   ) {
     /// set_exports_info used for optimize packages, use mjs resolver by default(Format::ESM)
     let mut resolved_export_map = vec![];
-    for (name, specifier, orig) in export_map {
+    for (name, src, orig) in export_map {
       let module = self.resolve_module(ResolveModuleOptions {
-        specifier: Some(specifier),
+        src: Some(src),
         context: key.to_string(),
         is_wildcard: None,
         format: Some(Format::ESM),
@@ -162,9 +163,9 @@ impl ModuleGraph {
     }
     let mut resolved_export_wildcards = vec![];
     // Create wildcard module
-    for specifier in export_wildcards {
+    for src in export_wildcards {
       let module = self.resolve_module(ResolveModuleOptions {
-        specifier: Some(specifier),
+        src: Some(src),
         context: key.to_string(),
         is_wildcard: None,
         format: Some(Format::ESM),
@@ -181,32 +182,32 @@ impl ModuleGraph {
       m.export_wildcard = resolved_export_wildcards;
     }
   }
-  pub fn get_mappings(&mut self, specifier: &str) -> Option<&HashMap<String, (String, String)>> {
+  pub fn get_mappings(&mut self, src: &str) -> Option<&HashMap<String, (String, String)>> {
     if !self
       .config
       .resolved_options
       .barrel_packages
-      .contains(&specifier.to_string())
+      .contains(&src.to_string())
     {
       return None;
     }
-    if self.export_map.contains_key(specifier) {
-      return self.export_map.get(specifier);
+    if self.export_map.contains_key(src) {
+      return self.export_map.get(src);
     };
     let mut export_map = HashMap::new();
-    let module = self.get_module_by_specifier(specifier);
+    let module = self.get_module_by_src(src);
     get_matches(module, self, &mut export_map);
-    if !self.export_map.contains_key(specifier) {
-      self.export_map.insert(specifier.to_string(), export_map);
+    if !self.export_map.contains_key(src) {
+      self.export_map.insert(src.to_string(), export_map);
     }
-    return self.export_map.get(specifier);
+    return self.export_map.get(src);
   }
   pub fn resolve_entry_module(
     &mut self,
-    specifier: Option<String>,
+    src: Option<String>,
     is_wildcard: Option<bool>,
   ) -> Option<&mut Module> {
-    if let Some(sp) = specifier {
+    if let Some(sp) = src {
       let abs_path = {
         let path = sp.as_path().absolutize();
         path.to_str().unwrap_or_default().to_string()
@@ -216,7 +217,7 @@ impl ModuleGraph {
         &self.config.resolved_options.output.to_str().unwrap(),
       );
       let m = Module {
-        specifier: sp,
+        src: sp,
         v_abs_path: String::from(v_abs_path),
         abs_path: String::from(&abs_path),
         is_entry: true,
@@ -229,10 +230,10 @@ impl ModuleGraph {
       None
     }
   }
-  /// Also add resolved module into self.modules
+  /// Resolved module added into self.modules
   pub fn resolve_module(&mut self, options: ResolveModuleOptions) -> Option<&mut Module> {
     let ResolveModuleOptions {
-      specifier,
+      src,
       context,
       is_wildcard,
       format,
@@ -240,8 +241,8 @@ impl ModuleGraph {
 
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
-    // TODO: should skip resolve if specifier and context found in module graph
-    if let Some(sp) = specifier {
+    // TODO: should skip resolve if src and context found in module graph
+    if let Some(sp) = src {
       // is barrel optimize
       if self.config.resolved_options.barrel_packages.contains(&sp) {
         let mappings = self.get_mappings(&sp);
@@ -291,7 +292,7 @@ impl ModuleGraph {
             abs_path, v_abs_path, is_script
           );
           let m = Module {
-            specifier: sp,
+            src: sp,
             context: context.unwrap_or_default(),
             is_script,
             abs_path: abs_path.clone(),
@@ -318,8 +319,8 @@ impl ModuleGraph {
       None
     }
   }
-  pub fn get_module_by_specifier(&self, specifier: &str) -> Option<&Module> {
-    self.modules.values().find(|m| m.specifier == specifier)
+  pub fn get_module_by_src(&self, src: &str) -> Option<&Module> {
+    self.modules.values().find(|m| m.src == src)
   }
   pub fn get_unused_modules(&mut self) -> impl Iterator<Item = &mut Module> {
     self.modules.values_mut().filter(|module| !module.used)

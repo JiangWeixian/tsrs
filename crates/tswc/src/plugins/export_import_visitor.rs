@@ -50,11 +50,11 @@ impl<'a> ImportExportVisitor<'a> {
 // import
 impl<'a> ImportExportVisitor<'a> {
   fn add_import(&mut self, import: ImportSpecifier) -> Option<&mut Module> {
-    let specifier = import.src.clone();
-    debug!(target: "tswc", "add import {:?} {:?}", specifier, self.context);
+    let src = import.src.clone();
+    debug!(target: "tswc", "add import {:?} {:?}", src, self.context);
     self.imports.push(import);
     let m = self.module_graph.resolve_module(ResolveModuleOptions {
-      specifier,
+      src,
       context: self.context.clone(),
       ..Default::default()
     });
@@ -164,10 +164,10 @@ impl<'a> ImportExportVisitor<'a> {
 // export
 impl<'a> ImportExportVisitor<'a> {
   fn add_export(&mut self, export: ExportSpecifier) -> Option<&mut Module> {
-    let specifier = export.src.clone();
+    let src = export.src.clone();
     self.exports.push(export);
     let m = self.module_graph.resolve_module(ResolveModuleOptions {
-      specifier,
+      src,
       context: self.context.clone(),
       ..Default::default()
     });

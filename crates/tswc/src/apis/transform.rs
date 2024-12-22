@@ -20,7 +20,7 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
   } = options;
   for package in barrel_packages {
     mg.resolve_module(ResolveModuleOptions {
-      specifier: Some(package),
+      src: Some(package),
       context: root.clone(),
       is_wildcard: Some(true),
       format: Some(Format::ESM),
