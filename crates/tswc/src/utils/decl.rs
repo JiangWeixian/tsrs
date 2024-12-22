@@ -14,7 +14,7 @@ pub enum ImportType {
     "]
   ImportMeta = 3,
   #[doc = "
-    A source phase import 
+    A source phase import
         import source x from 'module'
     "]
   StaticSourcePhase = 4,
@@ -27,7 +27,9 @@ pub enum ImportType {
 
 #[derive(Debug, Clone)]
 pub struct ImportSpecifier {
-  // import x from "n"
+  #[doc = " Export name "]
+  pub n: Option<String>,
+  // import x from "src"
   #[doc = " Source name "]
   pub src: Option<String>,
   #[doc = " Type of import statement "]

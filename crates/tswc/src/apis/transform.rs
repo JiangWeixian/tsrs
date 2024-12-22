@@ -24,6 +24,7 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
       context: root.clone(),
       is_wildcard: Some(true),
       format: Some(Format::ESM),
+      ..Default::default()
     });
   }
   while mg.get_wildcard_modules_size() != 0 {
@@ -51,10 +52,7 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
       }
     }
   }
-  let mappings = mg.get_mappings("@mui/material");
-  if let Some(mappings) = mappings {
-    println!("mappings {:?}", mappings.get("Accordion"))
-  }
+  debug!("Finish pre optimized")
 }
 
 #[napi(object)]

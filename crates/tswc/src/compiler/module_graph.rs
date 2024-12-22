@@ -46,11 +46,12 @@ fn get_matches(
     for (name, path, orig) in &m.export_map {
       export_map.insert(name.clone(), (path.clone(), orig.clone()));
     }
+    // println!("export_wildcard {:?}", m.export_wildcard);
     if !m.export_wildcard.is_empty() {
       for src in &m.export_wildcard {
         let module = mg.get_module_by_src(src);
         // `if let some(...)` can prevent segmentation fault panic
-        if let Some(module) = mg.modules.get(src) {
+        if let Some(module) = module {
           get_matches(Some(module), mg, export_map);
         }
       }
@@ -61,6 +62,7 @@ fn get_matches(
 #[derive(Default, Clone, Debug)]
 pub struct ResolveModuleOptions {
   pub src: Option<String>,
+  pub specifier: Option<String>,
   pub context: String,
   pub is_wildcard: Option<bool>,
   pub format: Option<Format>,
@@ -156,6 +158,7 @@ impl ModuleGraph {
         context: key.to_string(),
         is_wildcard: None,
         format: Some(Format::ESM),
+        ..Default::default()
       });
       if let Some(m) = module {
         resolved_export_map.push((name.clone(), m.abs_path.clone(), orig.clone()));
@@ -169,12 +172,17 @@ impl ModuleGraph {
         context: key.to_string(),
         is_wildcard: None,
         format: Some(Format::ESM),
+        ..Default::default()
       });
       if let Some(m) = module {
         m.is_wildcard = true;
         resolved_export_wildcards.push(m.abs_path.clone());
       }
     }
+    // println!(
+    //   "set_exports_info {:?} {:?}",
+    //   resolved_export_map, resolved_export_wildcards
+    // );
     // TODO: maybe should create export_map instance for further get matches
     let module = self.modules.get_mut(key);
     if let Some(m) = module {
@@ -182,6 +190,7 @@ impl ModuleGraph {
       m.export_wildcard = resolved_export_wildcards;
     }
   }
+  /// Mappings: { [src]: { [specifier]: [abs_path, orig] } }
   pub fn get_mappings(&mut self, src: &str) -> Option<&HashMap<String, (String, String)>> {
     if !self
       .config
@@ -191,13 +200,18 @@ impl ModuleGraph {
     {
       return None;
     }
-    if self.export_map.contains_key(src) {
+    let size = self
+      .export_map
+      .get(src)
+      .and_then(|f| Some(f.len()))
+      .unwrap_or(0);
+    if size > 0 {
       return self.export_map.get(src);
     };
     let mut export_map = HashMap::new();
     let module = self.get_module_by_src(src);
     get_matches(module, self, &mut export_map);
-    if !self.export_map.contains_key(src) {
+    if size == 0 {
       self.export_map.insert(src.to_string(), export_map);
     }
     return self.export_map.get(src);
@@ -230,6 +244,30 @@ impl ModuleGraph {
       None
     }
   }
+  pub fn get_module(&mut self, options: ResolveModuleOptions) -> Option<&mut Module> {
+    let ResolveModuleOptions {
+      src,
+      context,
+      is_wildcard,
+      format,
+      specifier,
+    } = options;
+    if let Some(src) = src.clone() {
+      // is barrel optimize
+      if self.config.resolved_options.barrel_packages.contains(&src) {
+        if let Some(specifier) = specifier {
+          if let Some(mappings) = self.get_mappings(&src) {
+            if let Some((abs_path, _)) = mappings.get(&specifier).cloned() {
+              if let Some(m) = self.modules.get_mut(&abs_path) {
+                return Some(m);
+              }
+            }
+          }
+        }
+      }
+    }
+    return None;
+  }
   /// Resolved module added into self.modules
   pub fn resolve_module(&mut self, options: ResolveModuleOptions) -> Option<&mut Module> {
     let ResolveModuleOptions {
@@ -237,17 +275,13 @@ impl ModuleGraph {
       context,
       is_wildcard,
       format,
+      specifier,
     } = options;
-
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
     // TODO: should skip resolve if src and context found in module graph
-    if let Some(sp) = src {
-      // is barrel optimize
-      if self.config.resolved_options.barrel_packages.contains(&sp) {
-        let mappings = self.get_mappings(&sp);
-      }
-      let module = match self.resolver.resolve(&sp, &context, format) {
+    if let Some(src) = src {
+      let module = match self.resolver.resolve(&src, &context, format) {
         Some(resolved) => {
           let abs_path: String = resolved
             .abs_path
@@ -292,7 +326,7 @@ impl ModuleGraph {
             abs_path, v_abs_path, is_script
           );
           let m = Module {
-            src: sp,
+            src,
             context: context.unwrap_or_default(),
             is_script,
             abs_path: abs_path.clone(),

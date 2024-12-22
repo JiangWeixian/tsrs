@@ -49,16 +49,35 @@ impl<'a> ImportExportVisitor<'a> {
 
 // import
 impl<'a> ImportExportVisitor<'a> {
-  fn add_import(&mut self, import: ImportSpecifier) -> Option<&mut Module> {
+  // TODO: add with_ext here
+  fn add_import(&mut self, import: ImportSpecifier) -> Option<String> {
     let src = import.src.clone();
+    let spec = import.n.clone();
     debug!(target: "tswc", "add import {:?} {:?}", src, self.context);
     self.imports.push(import);
-    let m = self.module_graph.resolve_module(ResolveModuleOptions {
-      src,
+
+    let options = ResolveModuleOptions {
+      src: src.clone(),
       context: self.context.clone(),
+      specifier: spec.clone(),
       ..Default::default()
-    });
-    m
+    };
+    let gm = self.module_graph.get_module(options);
+    if let Some(m) = gm {
+      return Some(m.v_abs_path.clone());
+    } else {
+      let options = ResolveModuleOptions {
+        src: src.clone(),
+        context: self.context.clone(),
+        specifier: spec.clone(),
+        ..Default::default()
+      };
+      let rm = self.module_graph.resolve_module(options);
+      if let Some(m) = rm {
+        return Some(m.v_abs_path.clone());
+      }
+      return None;
+    }
   }
 
   fn parse_import(&mut self, import: &mut ast::ImportDecl) {
@@ -74,6 +93,7 @@ impl<'a> ImportExportVisitor<'a> {
       self.add_import(ImportSpecifier {
         src: Some(name),
         t: ImportType::Static,
+        n: None,
       });
       return;
     }
@@ -151,8 +171,9 @@ impl<'a> ImportExportVisitor<'a> {
           let m = self.add_import(ImportSpecifier {
             src: Some(name),
             t: t.unwrap(),
+            n: Some(first_specifier.local().sym.to_string()),
           });
-          if let Some(v) = m.and_then(|f| f.with_ext()) {
+          if let Some(v) = m {
             import.src = Box::new(ast::Str::from(v));
           }
         }
@@ -703,6 +724,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
             self.add_import(ImportSpecifier {
               src: name,
               t: t.unwrap(),
+              n: None,
             });
           }
         }
@@ -728,6 +750,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
     self.add_import(ImportSpecifier {
       src: None,
       t: ImportType::ImportMeta,
+      n: None,
     });
     // `import.meta` can only appear in module
     self.set_module_syntax(true);
