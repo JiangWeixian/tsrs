@@ -85,10 +85,12 @@ pub struct Module {
   /// Resolve failed
   pub not_found: bool,
   /// input files from options.include
+  #[allow(dead_code)]
   pub is_entry: bool,
   /// Resolved absolute filepath of src
   pub abs_path: String,
   /// Relative path relative to abs_path
+  #[allow(dead_code)]
   pub relative_path: String,
   /// Virtual absolute filepath, rewrite abs_path based on output.dir
   pub v_abs_path: String,

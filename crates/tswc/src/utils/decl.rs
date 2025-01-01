@@ -25,6 +25,7 @@ pub enum ImportType {
   DynamicSourcePhase = 5,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ImportSpecifier {
   #[doc = " Export name "]
@@ -36,6 +37,7 @@ pub struct ImportSpecifier {
   pub t: ImportType,
 }
 
+#[allow(dead_code)]
 #[derive(Debug, Clone)]
 pub struct ExportSpecifier {
   #[doc = " Export name "]
