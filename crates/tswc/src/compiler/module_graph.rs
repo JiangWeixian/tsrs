@@ -244,7 +244,7 @@ impl ModuleGraph {
       None
     }
   }
-  pub fn get_module(&mut self, options: ResolveModuleOptions) -> Option<&mut Module> {
+  pub fn get_module(&mut self, options: ResolveModuleOptions) -> Option<&Module> {
     let ResolveModuleOptions {
       src,
       context,
@@ -258,12 +258,14 @@ impl ModuleGraph {
         if let Some(specifier) = specifier {
           if let Some(mappings) = self.get_mappings(&src) {
             if let Some((abs_path, _)) = mappings.get(&specifier).cloned() {
-              if let Some(m) = self.modules.get_mut(&abs_path) {
+              if let Some(m) = self.modules.get(&abs_path) {
                 return Some(m);
               }
             }
           }
         }
+      } else {
+        return self.get_module_by_src_and_context(&src, &context);
       }
     }
     return None;
@@ -352,6 +354,12 @@ impl ModuleGraph {
     } else {
       None
     }
+  }
+  pub fn get_module_by_src_and_context(&self, src: &str, context: &str) -> Option<&Module> {
+    self
+      .modules
+      .values()
+      .find(|m| m.src == src && m.context == context)
   }
   pub fn get_module_by_src(&self, src: &str) -> Option<&Module> {
     self.modules.values().find(|m| m.src == src)
