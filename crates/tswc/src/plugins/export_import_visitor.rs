@@ -201,7 +201,6 @@ impl<'a> ImportExportVisitor<'a> {
       n: name.clone(),
       ln: Some(name),
       src: None,
-      wildcard: false,
     });
   }
 
@@ -263,7 +262,6 @@ impl<'a> ImportExportVisitor<'a> {
           n: name,
           ln: origin_name,
           src: src_str,
-          wildcard: false,
         });
 
         return (true, m);
@@ -286,7 +284,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name,
             ln: None,
             src: src_str,
-            wildcard: false,
           });
           return (true, m);
         }
@@ -336,7 +333,6 @@ impl<'a> ImportExportVisitor<'a> {
       n: name,
       ln: None,
       src: None,
-      wildcard: false,
     });
   }
 
@@ -355,7 +351,6 @@ impl<'a> ImportExportVisitor<'a> {
                 n: name.clone(),
                 ln: Some(name),
                 src: None,
-                wildcard: false,
               });
             }
             ast::Pat::Object(pat) => {
@@ -369,7 +364,6 @@ impl<'a> ImportExportVisitor<'a> {
                       n: name.clone(),
                       ln: Some(name),
                       src: None,
-                      wildcard: false,
                     });
                   }
                   ast::ObjectPatProp::KeyValue(kv) => {
@@ -382,7 +376,6 @@ impl<'a> ImportExportVisitor<'a> {
                           n: name.clone(),
                           ln: Some(name),
                           src: None,
-                          wildcard: false,
                         });
                       }
                       _ => {
@@ -406,7 +399,6 @@ impl<'a> ImportExportVisitor<'a> {
                       n: name.clone(),
                       ln: Some(name),
                       src: None,
-                      wildcard: false,
                     });
                   }
                 }
@@ -423,7 +415,6 @@ impl<'a> ImportExportVisitor<'a> {
           n: name.clone(),
           ln: Some(name),
           src: None,
-          wildcard: false,
         });
       }
       ast::Decl::TsModule(decl) => {
@@ -433,7 +424,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name.clone(),
             ln: Some(name),
             src: None,
-            wildcard: false,
           });
         }
         // do not visit import / export within namespace
@@ -456,7 +446,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: DEFAULT_EXPORT.to_string(),
             ln: Some(origin_name),
             src: None,
-            wildcard: false,
           });
         } else {
           let name = DEFAULT_EXPORT.to_string();
@@ -464,7 +453,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name,
             ln: None,
             src: None,
-            wildcard: false,
           });
         }
       }
@@ -477,7 +465,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: DEFAULT_EXPORT.to_string(),
             ln: Some(origin_name),
             src: None,
-            wildcard: false,
           });
         } else {
           let name = DEFAULT_EXPORT.to_string();
@@ -485,7 +472,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name.clone(),
             ln: None,
             src: None,
-            wildcard: false,
           });
         }
       }
@@ -651,7 +637,6 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
           n: "*".into(),
           ln: Some("".into()),
           src: Some(name),
-          wildcard: true,
         });
         if let Some(v) = m.and_then(|f| f.with_ext()) {
           export.src = Box::new(ast::Str::from(v));

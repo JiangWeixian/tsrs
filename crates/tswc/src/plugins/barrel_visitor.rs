@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use log::debug;
 use serde::Deserialize;
 use swc_core::ecma::ast::*;
 use swc_core::ecma::visit::Fold;
@@ -266,6 +267,11 @@ impl<'a> Fold for Barrel<'a> {
       }
     }
 
+    debug!(
+      target: "tswc",
+      "file {:?} is barrel? {}",
+      &self.context, is_barrel
+    );
     self
       .module_graph
       .set_exports_info(&self.context, export_map, export_wildcards);

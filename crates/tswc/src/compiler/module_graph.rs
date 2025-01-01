@@ -156,7 +156,7 @@ impl ModuleGraph {
       let module = self.resolve_module(ResolveModuleOptions {
         src: Some(src),
         context: key.to_string(),
-        is_wildcard: None,
+        is_wildcard: Some(false),
         format: Some(Format::ESM),
         ..Default::default()
       });
@@ -170,7 +170,7 @@ impl ModuleGraph {
       let module = self.resolve_module(ResolveModuleOptions {
         src: Some(src),
         context: key.to_string(),
-        is_wildcard: None,
+        is_wildcard: Some(true),
         format: Some(Format::ESM),
         ..Default::default()
       });
@@ -248,7 +248,6 @@ impl ModuleGraph {
     let ResolveModuleOptions {
       src,
       context,
-      is_wildcard,
       specifier,
       ..
     } = options;

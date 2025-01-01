@@ -41,13 +41,13 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
               target: "tswc",
               "optimize! {:?}", &decl.abs_path
           );
-          (decl.abs_path.clone(), decl.is_script)
+          (decl.abs_path.clone(), decl.is_script, decl.is_wildcard)
         })
         .collect()
     };
-    for (resolved_path, is_script) in paths_to_compile {
+    for (resolved_path, is_script, is_wildcard) in paths_to_compile {
       if is_script {
-        optimize(&resolved_path, &mut mg);
+        optimize(&resolved_path, &mut mg, Some(is_wildcard));
       } else {
       }
     }

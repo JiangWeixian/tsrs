@@ -44,6 +44,4 @@ pub struct ExportSpecifier {
   pub ln: Option<String>,
   #[doc = " Source name "]
   pub src: Option<String>,
-  #[doc = " Export star "]
-  pub wildcard: bool,
 }

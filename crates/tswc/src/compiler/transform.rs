@@ -185,15 +185,20 @@ pub fn transform_with_optimize<'a>(
   _cm: Arc<SourceMap>,
   module_graph: &'a mut ModuleGraph,
   context: String,
+  wildcard: bool,
 ) -> impl Fold + 'a {
-  let barrel = Barrel::new(module_graph, context, BarrelConfig { wildcard: false });
+  let barrel = Barrel::new(module_graph, context, BarrelConfig { wildcard });
   let ch = chain!(barrel, noop());
   ch
 }
 
 // Do some optimization.
 // Job: Barrel optimize
-pub fn optimize<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) -> TransformOutput {
+pub fn optimize<'a>(
+  resource_path: &str,
+  mut module_graph: &'a mut ModuleGraph,
+  wildcard: Option<bool>,
+) -> TransformOutput {
   let options = module_graph.config.tsconfig.clone().unwrap().into_options();
   // to absolute path
   let resource_path = Path::new(resource_path).canonicalize().expect("TODO:");
@@ -219,6 +224,7 @@ pub fn optimize<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) 
         c.cm().clone(),
         &mut module_graph,
         resource_path.to_str().unwrap().to_string(),
+        wildcard.unwrap_or(false),
       )
     })
     .expect("TODO:");

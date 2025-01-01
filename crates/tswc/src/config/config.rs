@@ -28,7 +28,6 @@ impl Default for ConfigOptions {
 pub struct ResolvedConfigOptions {
   pub input: PathBuf,
   pub output: PathBuf,
-  pub root: PathBuf,
   pub exclude: Vec<String>,
   pub barrel_packages: Vec<String>,
 }
@@ -87,7 +86,6 @@ impl Config {
       input,
       output,
       exclude,
-      root: self.options.root.clone(),
       barrel_packages: self.options.barrel_packages.clone(),
     };
     self.resolved_options = resolved_options;
