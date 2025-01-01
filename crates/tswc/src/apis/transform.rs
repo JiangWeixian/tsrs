@@ -47,7 +47,7 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
     };
     for (resolved_path, is_script) in paths_to_compile {
       if is_script {
-        let result = optimize(&resolved_path, &mut mg);
+        optimize(&resolved_path, &mut mg);
       } else {
       }
     }
@@ -114,7 +114,7 @@ pub fn transform(options: TransformOptions) {
     );
   }
   while mg.get_unused_modules_size() != 0 {
-    /// Wrap paths_to_compile with `{}` prevent lifetime issue
+    // Wrap paths_to_compile with `{}` prevent lifetime issue
     let paths_to_compile: Vec<_> = {
       let unused_modules = mg.get_unused_modules();
       unused_modules

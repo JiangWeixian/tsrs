@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use log::debug;
 use swc_core::ecma::ast::{
-  self, ImportPhase, ImportSpecifier as SWCImportSpecifier, ModuleExportName, NamedExport,
+  self, ImportPhase, ImportSpecifier as SWCImportSpecifier, ModuleExportName,
 };
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
@@ -252,7 +252,7 @@ impl<'a> ImportExportVisitor<'a> {
 
         let src_str: Option<String> = if let Some(src) = &export_named.src {
           Some(src.value.to_string())
-        } else if let Some((src, orig)) = self.local_idents.get(&origin_name.clone().unwrap()) {
+        } else if let Some((src, _)) = self.local_idents.get(&origin_name.clone().unwrap()) {
           Some(src.into())
         } else {
           None
@@ -699,7 +699,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
           let second_arg = call.args.get(1);
           if let Some(arg) = second_arg {
             // support object only
-            if let ast::Expr::Object(obj) = arg.expr.as_ref() {}
+            if let ast::Expr::Object(_) = arg.expr.as_ref() {}
           }
 
           let mut t: Option<ImportType> = None;

@@ -143,14 +143,14 @@ impl ModuleGraph {
       self.modules.get_mut(abs_path)
     }
   }
-  /// Set exported info from optimized packages. e.g barrel_packages
+  // Set exported info from optimized packages. e.g barrel_packages
   pub fn set_exports_info(
     &mut self,
     key: &str,
     export_map: Vec<(String, String, String)>,
     export_wildcards: Vec<String>,
   ) {
-    /// set_exports_info used for optimize packages, use mjs resolver by default(Format::ESM)
+    // set_exports_info used for optimize packages, use mjs resolver by default(Format::ESM)
     let mut resolved_export_map = vec![];
     for (name, src, orig) in export_map {
       let module = self.resolve_module(ResolveModuleOptions {
@@ -249,8 +249,8 @@ impl ModuleGraph {
       src,
       context,
       is_wildcard,
-      format,
       specifier,
+      ..
     } = options;
     if let Some(src) = src.clone() {
       // is barrel optimize
@@ -277,7 +277,7 @@ impl ModuleGraph {
       context,
       is_wildcard,
       format,
-      specifier,
+      ..
     } = options;
     // TODO: currently we resolve and add every module during compile
     // should we only resolve and add every module config in paths
