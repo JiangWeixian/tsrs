@@ -29,7 +29,7 @@
   "scripts": {
     "build": "napi build --platform --release",
     "build:debug": "napi build --platform",
-    "test": "ava",
+    "test": "vitest",
     "test:e2e": "node ./scripts/test.js"
   },
   "optionalDependencies": {
@@ -44,7 +44,7 @@
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",
-    "ava": "^6.0.1"
+    "vitest": "2.1.8"
   },
   "ava": {
     "timeout": "3m"
