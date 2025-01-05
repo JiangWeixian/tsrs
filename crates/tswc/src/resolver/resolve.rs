@@ -23,6 +23,7 @@ fn find_up_dir(context: PathBuf) -> Option<String> {
   }
 }
 
+#[derive(Debug, Clone)]
 pub struct ResolvedSpecifier {
   pub abs_path: Option<String>,
   // TODO: remove this one

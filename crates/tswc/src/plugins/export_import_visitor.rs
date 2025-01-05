@@ -6,7 +6,7 @@ use swc_core::ecma::ast::{
 };
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
-use crate::compiler::{Module, ModuleGraph, ResolveModuleOptions};
+use crate::compiler::{ModuleGraph, ResolveModuleOptions};
 use crate::utils::{ExportSpecifier, ImportSpecifier, ImportType};
 use lazy_static::lazy_static;
 
@@ -74,7 +74,7 @@ impl<'a> ImportExportVisitor<'a> {
       };
       let rm = self.module_graph.resolve_module(options);
       if let Some(m) = rm {
-        return Some(m.v_abs_path.clone());
+        return Some(m.with_ext().clone());
       }
       return None;
     }
@@ -184,15 +184,31 @@ impl<'a> ImportExportVisitor<'a> {
 
 // export
 impl<'a> ImportExportVisitor<'a> {
-  fn add_export(&mut self, export: ExportSpecifier) -> Option<&mut Module> {
+  fn add_export(&mut self, export: ExportSpecifier) -> Option<String> {
     let src = export.src.clone();
     self.exports.push(export);
-    let m = self.module_graph.resolve_module(ResolveModuleOptions {
-      src,
+    let options = ResolveModuleOptions {
+      src: src.clone(),
       context: self.context.clone(),
       ..Default::default()
-    });
-    m
+    };
+    let gm = self.module_graph.get_module(options);
+    if let Some(m) = gm {
+      println!("add_export gm {:?} {:?}", src, m.v_abs_path.clone());
+      return Some(m.v_abs_path.clone());
+    } else {
+      let options = ResolveModuleOptions {
+        src: src.clone(),
+        context: self.context.clone(),
+        ..Default::default()
+      };
+      let rm = self.module_graph.resolve_module(options);
+      if let Some(m) = rm {
+        println!("add_export {:?} {:?}", src, m.with_ext().clone());
+        return Some(m.with_ext().clone());
+      }
+      return None;
+    }
   }
 
   fn add_export_from_ident(&mut self, ident: &ast::Ident) {
@@ -208,7 +224,7 @@ impl<'a> ImportExportVisitor<'a> {
     &mut self,
     specifier: &ast::ExportSpecifier,
     export_named: &mut ast::NamedExport,
-  ) -> (bool, Option<&mut Module>) {
+  ) -> (bool, Option<String>) {
     match specifier {
       ast::ExportSpecifier::Named(named) => {
         // skip type
@@ -314,7 +330,7 @@ impl<'a> ImportExportVisitor<'a> {
     for specifier in specifiers {
       let (need_add_import, m) = self.parse_export_spec(specifier, export);
       if resolved_src.is_none() {
-        resolved_src = m.and_then(|f| f.with_ext());
+        resolved_src = m
       }
       if need_add_import && !is_need_add_import {
         is_need_add_import = true;
@@ -638,7 +654,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
           ln: Some("".into()),
           src: Some(name),
         });
-        if let Some(v) = m.and_then(|f| f.with_ext()) {
+        if let Some(v) = m {
           export.src = Box::new(ast::Str::from(v));
         }
       }

@@ -108,15 +108,19 @@ pub struct Module {
 
 impl Module {
   // TODO: support custom ext
-  pub fn with_ext(&self) -> Option<String> {
+  pub fn with_ext(&self) -> String {
+    println!(
+      "with_ext {:?} {:?} {:?}",
+      self.abs_path, self.relative_path, self.v_relative_path
+    );
     if self.built_in || self.is_node_modules || self.not_found {
-      return Some(self.src.clone());
+      return self.src.clone();
     }
     if !self.is_script {
-      return Some(self.v_relative_path.clone());
+      return self.v_relative_path.clone();
     }
     let path = self.v_relative_path.as_path().with_extension("js");
-    path.to_str().map(|f| f.to_string())
+    path.to_str().map(|f| f.to_string()).unwrap()
   }
 }
 
@@ -328,6 +332,7 @@ impl ModuleGraph {
             "abs_path {:?} v_abs_path {:?} is_script {:?}",
             abs_path, v_abs_path, is_script
           );
+          println!("resolve_module {:?} {:?}", relative_path, context);
           let m = Module {
             src,
             context: context.unwrap_or_default(),
@@ -344,13 +349,16 @@ impl ModuleGraph {
             is_wildcard: is_wildcard.unwrap_or(false),
             ..Default::default()
           };
+          println!("resolve_module {:?}", m.clone());
           // FIXME: if abs_path releated is already inserted; self.add_module take no effect
           // modify m after resolve_module will not working on self.modules[abs_path]
           // and cloned module here, it mean m !== self.modules[abs_path]
-          self.add_module(&abs_path, m)
+          self.add_module(&abs_path, m);
+          self.modules.get_mut(&abs_path)
         }
         None => None,
       };
+      println!("resolve_module {:?}", module);
       module
     } else {
       None
