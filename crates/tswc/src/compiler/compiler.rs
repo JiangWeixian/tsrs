@@ -438,6 +438,7 @@ impl SwcCompiler {
     program
   }
 
+  #[allow(dead_code)]
   pub fn input_source_map(
     &self,
     input_src_map: &InputSourceMap,
@@ -668,6 +669,8 @@ impl SwcCompiler {
     })
   }
 }
+
+#[allow(dead_code)]
 trait IntoSwcComments {
   fn into_swc_comments(self) -> SwcComments;
 }

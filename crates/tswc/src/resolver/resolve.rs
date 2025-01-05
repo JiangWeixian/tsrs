@@ -9,6 +9,7 @@ use sugar_path::SugarPath;
 #[derive(Default, Debug)]
 pub struct Resolver {
   cjs_resolver: OxcResolver,
+  mjs_resolver: OxcResolver,
   options: ResolverOptions,
 }
 
@@ -49,6 +50,12 @@ impl Default for ResolverOptions {
   }
 }
 
+#[derive(Debug, Clone)]
+pub enum Format {
+  CJS,
+  ESM,
+}
+
 impl Resolver {
   pub fn new(options: ResolverOptions) -> Resolver {
     let resolver_options = ResolverOptions {
@@ -57,19 +64,20 @@ impl Resolver {
       modules: options.modules.clone(),
       ..ResolverOptions::default()
     };
-    let resolved_options = ResolveOptions {
+    let extensions = vec![
+      ".ts".into(),
+      ".tsx".into(),
+      ".js".into(),
+      ".jsx".into(),
+      ".json".into(),
+    ];
+    let cjs_resolved_options = ResolveOptions {
       tsconfig: Some(TsconfigOptions {
-        config_file: options.tsconfig,
+        config_file: options.tsconfig.clone(),
         references: TsconfigReferences::Auto,
       }),
       // TODO: exts should config
-      extensions: vec![
-        ".ts".into(),
-        ".tsx".into(),
-        ".js".into(),
-        ".jsx".into(),
-        ".json".into(),
-      ],
+      extensions: extensions.clone(),
       exports_fields: vec![vec!["exports".into()]],
       // TODO: create esm resolver
       // TODO: create browser resolver
@@ -77,12 +85,31 @@ impl Resolver {
       builtin_modules: true,
       main_fields: vec!["main".into()],
       symlinks: true,
+      modules: options.modules.clone(),
+      ..ResolveOptions::default()
+    };
+    let cjs_resolver = OxcResolver::new(cjs_resolved_options);
+    let mjs_resolved_options = ResolveOptions {
+      tsconfig: Some(TsconfigOptions {
+        config_file: options.tsconfig,
+        references: TsconfigReferences::Auto,
+      }),
+      // TODO: exts should config
+      extensions,
+      exports_fields: vec![vec!["exports".into()]],
+      // TODO: create esm resolver
+      // TODO: create browser resolver
+      condition_names: vec!["node".into(), "import".into(), "require".into()],
+      builtin_modules: true,
+      main_fields: vec!["module".into()],
+      symlinks: true,
       modules: options.modules,
       ..ResolveOptions::default()
     };
-    let cjs_resolver = OxcResolver::new(resolved_options);
+    let mjs_resolver = OxcResolver::new(mjs_resolved_options);
     Self {
       cjs_resolver,
+      mjs_resolver,
       options: resolver_options,
     }
   }
@@ -92,8 +119,19 @@ impl Resolver {
       Some(path) => path.contains("node_modules"),
     }
   }
-  pub fn resolve(&self, specifier: &str, context: &str) -> Option<ResolvedSpecifier> {
+  /// Format Default is CJS
+  pub fn resolve(
+    &self,
+    specifier: &str,
+    context: &str,
+    format: Option<Format>,
+  ) -> Option<ResolvedSpecifier> {
     let path_str = find_up_dir(PathBuf::from(context));
+    let format = format.unwrap_or(Format::CJS);
+    let resolver = match format {
+      Format::CJS => &self.cjs_resolver,
+      Format::ESM => &self.mjs_resolver,
+    };
 
     if path_str.is_none() {
       return None;
@@ -121,7 +159,6 @@ impl Resolver {
     );
     assert!(path.is_absolute(), "{path:?} must be an absolute path.",);
 
-    let resolver = &self.cjs_resolver;
     let mut built_in = false;
 
     let resolved_path: Option<String> = match resolver.resolve(path, &specifier) {

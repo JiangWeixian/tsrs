@@ -3,7 +3,9 @@ use std::path::Path;
 use std::sync::Arc;
 
 use super::{ModuleGraph, SwcCompiler};
-use crate::plugins::ImportExportVisitor;
+use crate::plugins::{
+  Barrel, BarrelConfig, ImportExportVisitor, NamedImportTransform, NamedImportTransformConfig,
+};
 use swc_core::base::config::{Config, JsMinifyFormatOptions, JscConfig, ModuleConfig, Options};
 use swc_core::base::TransformOutput;
 use swc_core::common::{chain, comments::Comments, Mark, SourceMap};
@@ -24,9 +26,12 @@ pub fn transform<'a>(
   module_graph: &'a mut ModuleGraph,
   context: String,
 ) -> impl Fold + 'a {
+  let packages = module_graph.config.resolved_options.barrel_packages.clone();
   let export_import_visitor = ImportExportVisitor::new(module_graph, context);
+  let named_import_transform_visitor =
+    NamedImportTransform::new(NamedImportTransformConfig { packages });
   let ch = chain!(
-    // as_folder(DemoVisitor::default()),
+    named_import_transform_visitor,
     as_folder(export_import_visitor),
     noop()
   );
@@ -58,7 +63,7 @@ impl IntoOptions for TsConfig {
             tsconfig::Target::EsNext => EsVersion::EsNext,
             tsconfig::Target::Other(target) => match target.as_str() {
               "ES2021" => EsVersion::Es2021,
-              "ES2021" => EsVersion::Es2022,
+              "ES2022" => EsVersion::Es2022,
               _ => EsVersion::Es3,
             },
           };
@@ -155,6 +160,79 @@ pub fn compile<'a>(resource_path: &str, mut module_graph: &'a mut ModuleGraph) -
     .transform(built)
     .map_err(|err| anyhow::Error::from(err))
     .expect("TODO:");
+  let format_opt = JsMinifyFormatOptions {
+    ..Default::default()
+  };
+  let output = c.print(
+    &program,
+    c.cm().clone(),
+    EsVersion::Es2022,
+    super::compiler::SourceMapConfig::default(),
+    None,
+    false,
+    None,
+    &format_opt,
+  );
+  output.unwrap()
+}
+
+#[allow(clippy::too_many_arguments)]
+pub fn transform_with_optimize<'a>(
+  _resource_path: &'a Path,
+  _comments: Option<&'a dyn Comments>,
+  _top_level_mark: Mark,
+  _unresolved_mark: Mark,
+  _cm: Arc<SourceMap>,
+  module_graph: &'a mut ModuleGraph,
+  context: String,
+  wildcard: bool,
+) -> impl Fold + 'a {
+  let barrel = Barrel::new(module_graph, context, BarrelConfig { wildcard });
+  let ch = chain!(barrel, noop());
+  ch
+}
+
+// Do some optimization.
+// Job: Barrel optimize
+pub fn optimize<'a>(
+  resource_path: &str,
+  mut module_graph: &'a mut ModuleGraph,
+  wildcard: Option<bool>,
+) -> TransformOutput {
+  let options = module_graph.config.tsconfig.clone().unwrap().into_options();
+  // to absolute path
+  let resource_path = Path::new(resource_path).canonicalize().expect("TODO:");
+  let source = fs::read_to_string(&resource_path).expect("failed to read file");
+  let c = SwcCompiler::new(resource_path.to_path_buf(), source.clone(), options)
+    .map_err(|err| anyhow::Error::from(err))
+    .expect("TODO:");
+  let options = c.options();
+  let top_level_mark = options
+    .top_level_mark
+    .expect("`top_level_mark` should be initialized");
+  let unresolved_mark = options
+    .unresolved_mark
+    .expect("`unresolved_mark` should be initialized");
+
+  let built = c
+    .parse(None, |_| {
+      transform_with_optimize(
+        &resource_path,
+        Some(c.comments()),
+        top_level_mark,
+        unresolved_mark,
+        c.cm().clone(),
+        &mut module_graph,
+        resource_path.to_str().unwrap().to_string(),
+        wildcard.unwrap_or(false),
+      )
+    })
+    .expect("TODO:");
+  let program = c
+    .transform(built)
+    .map_err(|err| anyhow::Error::from(err))
+    .expect("TODO:");
+
   let format_opt = JsMinifyFormatOptions {
     ..Default::default()
   };

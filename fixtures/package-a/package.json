@@ -13,7 +13,9 @@
   },
   "dependencies": {
     "@demo/package-b": "workspace:*",
-    "functional-md": "1.1.0"
+    "functional-md": "1.1.0",
+    "@mui/icons-material": "^5.14.19",
+    "@mui/material": "^5.14.19"
   },
   "devDependencies": {
     "typescript": "^5"

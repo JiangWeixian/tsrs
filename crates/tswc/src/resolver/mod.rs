@@ -1,2 +1,2 @@
 mod resolve;
-pub use resolve::{Resolver, ResolverOptions};
+pub use resolve::{Format, Resolver, ResolverOptions};

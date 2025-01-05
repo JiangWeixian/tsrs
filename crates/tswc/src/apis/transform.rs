@@ -1,9 +1,59 @@
-use crate::compiler::{compile, Assets, ModuleGraph};
+use crate::compiler::{compile, optimize, Assets, ModuleGraph, ResolveModuleOptions};
 use crate::config::{Config, ConfigOptions};
-use crate::resolver::{Resolver, ResolverOptions};
+use crate::resolver::{Format, Resolver, ResolverOptions};
 use log::debug;
 use napi_derive::napi;
 use sugar_path::SugarPath;
+
+pub struct PreOptimizeOptions<'a> {
+  pub root: String,
+  /// Pre optimized packages
+  pub barrel_packages: Vec<String>,
+  pub mg: &'a mut ModuleGraph,
+}
+
+pub fn pre_optimize(options: PreOptimizeOptions) {
+  let PreOptimizeOptions {
+    root,
+    barrel_packages,
+    mut mg,
+  } = options;
+  for package in barrel_packages {
+    mg.resolve_module(ResolveModuleOptions {
+      src: Some(package),
+      context: root.clone(),
+      is_wildcard: Some(true),
+      format: Some(Format::ESM),
+      ..Default::default()
+    });
+  }
+  while mg.get_wildcard_modules_size() != 0 {
+    println!(
+      "mg.get_wildcard_modules_size() {}",
+      mg.get_wildcard_modules_size()
+    );
+    let paths_to_compile: Vec<_> = {
+      let unused_modules = mg.get_wildcard_modules();
+      unused_modules
+        .map(|decl| {
+          decl.optimized = true;
+          debug!(
+              target: "tswc",
+              "optimize! {:?}", &decl.abs_path
+          );
+          (decl.abs_path.clone(), decl.is_script, decl.is_wildcard)
+        })
+        .collect()
+    };
+    for (resolved_path, is_script, is_wildcard) in paths_to_compile {
+      if is_script {
+        optimize(&resolved_path, &mut mg, Some(is_wildcard));
+      } else {
+      }
+    }
+  }
+  debug!("Finish pre optimized")
+}
 
 #[napi(object)]
 pub struct TransformOptions {
@@ -15,6 +65,8 @@ pub struct TransformOptions {
   pub exclude: Option<Vec<String>>,
   // TODO: should nested in resolve config
   pub modules: Option<Vec<String>>,
+  /// Optimized packages
+  pub barrel_packages: Vec<String>,
 }
 
 pub fn transform(options: TransformOptions) {
@@ -26,7 +78,9 @@ pub fn transform(options: TransformOptions) {
     externals,
     exclude,
     modules,
+    barrel_packages,
   } = options;
+  let root_cloned = root.clone();
   let root = root.as_path().absolutize();
   let tsconfig_path = root.join("tsconfig.json");
   let resolver = Resolver::new(ResolverOptions {
@@ -39,6 +93,7 @@ pub fn transform(options: TransformOptions) {
     root,
     output,
     exclude,
+    barrel_packages: barrel_packages.clone(),
   };
   let mut config = Config::new(config_options);
   config.resolve_options(&tsconfig_path);
@@ -46,26 +101,37 @@ pub fn transform(options: TransformOptions) {
   let files = config.files.clone();
   let mut mg = ModuleGraph::new(resolver, config);
   debug!(target: "tswc", "files {:?}", files);
+  pre_optimize(PreOptimizeOptions {
+    root: root_cloned,
+    barrel_packages,
+    mg: &mut mg,
+  });
   for path in files {
     let resource_path = path.as_path().absolutize();
-    mg.resolve_entry_module(Some(resource_path.to_str().unwrap_or_default().to_string()));
+    mg.resolve_entry_module(
+      Some(resource_path.to_str().unwrap_or_default().to_string()),
+      Some(false),
+    );
   }
   while mg.get_unused_modules_size() != 0 {
-    let paths_to_compile: Vec<_> = mg
-      .get_unused_modules()
-      .map(|decl| {
-        decl.used = true;
-        debug!(
-            target: "tswc",
-            "compile! {:?} {:?}", &decl.abs_path, &decl.v_abs_path
-        );
-        (
-          decl.abs_path.clone(),
-          decl.v_abs_path.clone(),
-          decl.is_script,
-        )
-      })
-      .collect();
+    // Wrap paths_to_compile with `{}` prevent lifetime issue
+    let paths_to_compile: Vec<_> = {
+      let unused_modules = mg.get_unused_modules();
+      unused_modules
+        .map(|decl| {
+          decl.used = true;
+          debug!(
+              target: "tswc",
+              "compile! {:?} {:?}", &decl.abs_path, &decl.v_abs_path
+          );
+          (
+            decl.abs_path.clone(),
+            decl.v_abs_path.clone(),
+            decl.is_script,
+          )
+        })
+        .collect()
+    };
     for (resolved_path, output_path, is_script) in paths_to_compile {
       debug!(target: "tswc", "output {} {}", output_path, is_script);
       if is_script {

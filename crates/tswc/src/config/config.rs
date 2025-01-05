@@ -10,6 +10,7 @@ pub struct ConfigOptions {
   pub output: Option<String>,
   pub root: PathBuf,
   pub exclude: Option<Vec<String>>,
+  pub barrel_packages: Vec<String>,
 }
 
 impl Default for ConfigOptions {
@@ -18,6 +19,7 @@ impl Default for ConfigOptions {
       output: None,
       root: PathBuf::default(),
       exclude: None,
+      barrel_packages: Default::default(),
     }
   }
 }
@@ -26,8 +28,8 @@ impl Default for ConfigOptions {
 pub struct ResolvedConfigOptions {
   pub input: PathBuf,
   pub output: PathBuf,
-  pub root: PathBuf,
   pub exclude: Vec<String>,
+  pub barrel_packages: Vec<String>,
 }
 
 #[derive(Default, Debug)]
@@ -84,7 +86,7 @@ impl Config {
       input,
       output,
       exclude,
-      root: self.options.root.clone(),
+      barrel_packages: self.options.barrel_packages.clone(),
     };
     self.resolved_options = resolved_options;
   }

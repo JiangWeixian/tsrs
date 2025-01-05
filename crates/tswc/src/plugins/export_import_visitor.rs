@@ -2,11 +2,11 @@ use std::collections::HashMap;
 
 use log::debug;
 use swc_core::ecma::ast::{
-  self, ImportPhase, ImportSpecifier as SWCImportSpecifier, ModuleExportName, NamedExport,
+  self, ImportPhase, ImportSpecifier as SWCImportSpecifier, ModuleExportName,
 };
 use swc_core::ecma::visit::{VisitMut, VisitMutWith};
 
-use crate::compiler::{Module, ModuleGraph};
+use crate::compiler::{Module, ModuleGraph, ResolveModuleOptions};
 use crate::utils::{ExportSpecifier, ImportSpecifier, ImportType};
 use lazy_static::lazy_static;
 
@@ -49,14 +49,35 @@ impl<'a> ImportExportVisitor<'a> {
 
 // import
 impl<'a> ImportExportVisitor<'a> {
-  fn add_import(&mut self, import: ImportSpecifier) -> Option<Module> {
-    let specifier = import.src.clone();
-    debug!(target: "tswc", "add import {:?} {:?}", specifier, self.context);
+  // TODO: add with_ext here
+  fn add_import(&mut self, import: ImportSpecifier) -> Option<String> {
+    let src = import.src.clone();
+    let spec = import.n.clone();
+    debug!(target: "tswc", "add import {:?} {:?}", src, self.context);
     self.imports.push(import);
-    let m = self
-      .module_graph
-      .resolve_module(specifier, self.context.clone());
-    m
+
+    let options = ResolveModuleOptions {
+      src: src.clone(),
+      context: self.context.clone(),
+      specifier: spec.clone(),
+      ..Default::default()
+    };
+    let gm = self.module_graph.get_module(options);
+    if let Some(m) = gm {
+      return Some(m.v_abs_path.clone());
+    } else {
+      let options = ResolveModuleOptions {
+        src: src.clone(),
+        context: self.context.clone(),
+        specifier: spec.clone(),
+        ..Default::default()
+      };
+      let rm = self.module_graph.resolve_module(options);
+      if let Some(m) = rm {
+        return Some(m.v_abs_path.clone());
+      }
+      return None;
+    }
   }
 
   fn parse_import(&mut self, import: &mut ast::ImportDecl) {
@@ -72,6 +93,7 @@ impl<'a> ImportExportVisitor<'a> {
       self.add_import(ImportSpecifier {
         src: Some(name),
         t: ImportType::Static,
+        n: None,
       });
       return;
     }
@@ -149,8 +171,9 @@ impl<'a> ImportExportVisitor<'a> {
           let m = self.add_import(ImportSpecifier {
             src: Some(name),
             t: t.unwrap(),
+            n: Some(first_specifier.local().sym.to_string()),
           });
-          if let Some(v) = m.and_then(|f| f.with_ext()) {
+          if let Some(v) = m {
             import.src = Box::new(ast::Str::from(v));
           }
         }
@@ -161,12 +184,14 @@ impl<'a> ImportExportVisitor<'a> {
 
 // export
 impl<'a> ImportExportVisitor<'a> {
-  fn add_export(&mut self, export: ExportSpecifier) -> Option<Module> {
-    let specifier = export.src.clone();
+  fn add_export(&mut self, export: ExportSpecifier) -> Option<&mut Module> {
+    let src = export.src.clone();
     self.exports.push(export);
-    let m = self
-      .module_graph
-      .resolve_module(specifier, self.context.clone());
+    let m = self.module_graph.resolve_module(ResolveModuleOptions {
+      src,
+      context: self.context.clone(),
+      ..Default::default()
+    });
     m
   }
 
@@ -176,7 +201,6 @@ impl<'a> ImportExportVisitor<'a> {
       n: name.clone(),
       ln: Some(name),
       src: None,
-      wildcard: false,
     });
   }
 
@@ -184,7 +208,7 @@ impl<'a> ImportExportVisitor<'a> {
     &mut self,
     specifier: &ast::ExportSpecifier,
     export_named: &mut ast::NamedExport,
-  ) -> (bool, Option<Module>) {
+  ) -> (bool, Option<&mut Module>) {
     match specifier {
       ast::ExportSpecifier::Named(named) => {
         // skip type
@@ -227,7 +251,7 @@ impl<'a> ImportExportVisitor<'a> {
 
         let src_str: Option<String> = if let Some(src) = &export_named.src {
           Some(src.value.to_string())
-        } else if let Some((src, orig)) = self.local_idents.get(&origin_name.clone().unwrap()) {
+        } else if let Some((src, _)) = self.local_idents.get(&origin_name.clone().unwrap()) {
           Some(src.into())
         } else {
           None
@@ -238,7 +262,6 @@ impl<'a> ImportExportVisitor<'a> {
           n: name,
           ln: origin_name,
           src: src_str,
-          wildcard: false,
         });
 
         return (true, m);
@@ -261,7 +284,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name,
             ln: None,
             src: src_str,
-            wildcard: false,
           });
           return (true, m);
         }
@@ -287,18 +309,19 @@ impl<'a> ImportExportVisitor<'a> {
     }
 
     let mut is_need_add_import = false;
-    let mut module: Option<Module> = None;
+    let mut resolved_src: Option<String> = None;
     let specifiers = &export.specifiers.clone();
     for specifier in specifiers {
       let (need_add_import, m) = self.parse_export_spec(specifier, export);
-      if module.is_none() {
-        module = m;
+      if resolved_src.is_none() {
+        resolved_src = m.and_then(|f| f.with_ext());
       }
       if need_add_import && !is_need_add_import {
         is_need_add_import = true;
       }
     }
-    if let Some(v) = module.and_then(|f| f.with_ext()) {
+
+    if let Some(v) = resolved_src {
       export.src = Some(Box::new(ast::Str::from(v)));
     }
     return is_need_add_import;
@@ -310,7 +333,6 @@ impl<'a> ImportExportVisitor<'a> {
       n: name,
       ln: None,
       src: None,
-      wildcard: false,
     });
   }
 
@@ -329,7 +351,6 @@ impl<'a> ImportExportVisitor<'a> {
                 n: name.clone(),
                 ln: Some(name),
                 src: None,
-                wildcard: false,
               });
             }
             ast::Pat::Object(pat) => {
@@ -343,7 +364,6 @@ impl<'a> ImportExportVisitor<'a> {
                       n: name.clone(),
                       ln: Some(name),
                       src: None,
-                      wildcard: false,
                     });
                   }
                   ast::ObjectPatProp::KeyValue(kv) => {
@@ -356,7 +376,6 @@ impl<'a> ImportExportVisitor<'a> {
                           n: name.clone(),
                           ln: Some(name),
                           src: None,
-                          wildcard: false,
                         });
                       }
                       _ => {
@@ -380,7 +399,6 @@ impl<'a> ImportExportVisitor<'a> {
                       n: name.clone(),
                       ln: Some(name),
                       src: None,
-                      wildcard: false,
                     });
                   }
                 }
@@ -397,7 +415,6 @@ impl<'a> ImportExportVisitor<'a> {
           n: name.clone(),
           ln: Some(name),
           src: None,
-          wildcard: false,
         });
       }
       ast::Decl::TsModule(decl) => {
@@ -407,7 +424,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name.clone(),
             ln: Some(name),
             src: None,
-            wildcard: false,
           });
         }
         // do not visit import / export within namespace
@@ -430,7 +446,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: DEFAULT_EXPORT.to_string(),
             ln: Some(origin_name),
             src: None,
-            wildcard: false,
           });
         } else {
           let name = DEFAULT_EXPORT.to_string();
@@ -438,7 +453,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name,
             ln: None,
             src: None,
-            wildcard: false,
           });
         }
       }
@@ -451,7 +465,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: DEFAULT_EXPORT.to_string(),
             ln: Some(origin_name),
             src: None,
-            wildcard: false,
           });
         } else {
           let name = DEFAULT_EXPORT.to_string();
@@ -459,7 +472,6 @@ impl<'a> ImportExportVisitor<'a> {
             n: name.clone(),
             ln: None,
             src: None,
-            wildcard: false,
           });
         }
       }
@@ -625,7 +637,6 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
           n: "*".into(),
           ln: Some("".into()),
           src: Some(name),
-          wildcard: true,
         });
         if let Some(v) = m.and_then(|f| f.with_ext()) {
           export.src = Box::new(ast::Str::from(v));
@@ -673,7 +684,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
           let second_arg = call.args.get(1);
           if let Some(arg) = second_arg {
             // support object only
-            if let ast::Expr::Object(obj) = arg.expr.as_ref() {}
+            if let ast::Expr::Object(_) = arg.expr.as_ref() {}
           }
 
           let mut t: Option<ImportType> = None;
@@ -698,6 +709,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
             self.add_import(ImportSpecifier {
               src: name,
               t: t.unwrap(),
+              n: None,
             });
           }
         }
@@ -723,6 +735,7 @@ impl<'a> VisitMut for ImportExportVisitor<'a> {
     self.add_import(ImportSpecifier {
       src: None,
       t: ImportType::ImportMeta,
+      n: None,
     });
     // `import.meta` can only appear in module
     self.set_module_syntax(true);
