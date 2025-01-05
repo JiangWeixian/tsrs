@@ -33,14 +33,14 @@
     "test:e2e": "node ./scripts/test.js"
   },
   "optionalDependencies": {
-    "tsrs-darwin-arm64": "workspace:*",
-    "tsrs-darwin-x64": "workspace:*",
-    "tsrs-linux-arm64-gnu": "workspace:*",
-    "tsrs-linux-arm64-musl": "workspace:*",
-    "tsrs-linux-x64-gnu": "workspace:*",
-    "tsrs-linux-x64-musl": "workspace:*",
-    "tsrs-win32-arm64-msvc": "workspace:*",
-    "tsrs-win32-x64-msvc": "workspace:*"
+    "@tsrs/core-darwin-arm64": "workspace:*",
+    "@tsrs/core-darwin-x64": "workspace:*",
+    "@tsrs/core-linux-arm64-gnu": "workspace:*",
+    "@tsrs/core-linux-arm64-musl": "workspace:*",
+    "@tsrs/core-linux-x64-gnu": "workspace:*",
+    "@tsrs/core-linux-x64-musl": "workspace:*",
+    "@tsrs/core-win32-arm64-msvc": "workspace:*",
+    "@tsrs/core-win32-x64-msvc": "workspace:*"
   },
   "devDependencies": {
     "@napi-rs/cli": "^2.18.4",

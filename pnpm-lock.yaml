@@ -37,6 +37,31 @@ importers:
         version: 4.9.5
 
   crates/binding_node:
+    optionalDependencies:
+      '@tsrs/core-darwin-arm64':
+        specifier: workspace:*
+        version: link:npm/darwin-arm64
+      '@tsrs/core-darwin-x64':
+        specifier: workspace:*
+        version: link:npm/darwin-x64
+      '@tsrs/core-linux-arm64-gnu':
+        specifier: workspace:*
+        version: link:npm/linux-arm64-gnu
+      '@tsrs/core-linux-arm64-musl':
+        specifier: workspace:*
+        version: link:npm/linux-arm64-musl
+      '@tsrs/core-linux-x64-gnu':
+        specifier: workspace:*
+        version: link:npm/linux-x64-gnu
+      '@tsrs/core-linux-x64-musl':
+        specifier: workspace:*
+        version: link:npm/linux-x64-musl
+      '@tsrs/core-win32-arm64-msvc':
+        specifier: workspace:*
+        version: link:npm/win32-arm64-msvc
+      '@tsrs/core-win32-x64-msvc':
+        specifier: workspace:*
+        version: link:npm/win32-x64-msvc
     devDependencies:
       '@napi-rs/cli':
         specifier: ^2.18.4
