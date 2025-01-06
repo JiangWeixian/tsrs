@@ -49,7 +49,6 @@ impl<'a> ImportExportVisitor<'a> {
 
 // import
 impl<'a> ImportExportVisitor<'a> {
-  // TODO: add with_ext here
   fn add_import(&mut self, import: ImportSpecifier) -> Option<String> {
     let src = import.src.clone();
     let spec = import.n.clone();
@@ -194,7 +193,6 @@ impl<'a> ImportExportVisitor<'a> {
     };
     let gm = self.module_graph.get_module(options);
     if let Some(m) = gm {
-      println!("add_export gm {:?} {:?}", src, m.v_abs_path.clone());
       return Some(m.v_abs_path.clone());
     } else {
       let options = ResolveModuleOptions {
@@ -204,7 +202,6 @@ impl<'a> ImportExportVisitor<'a> {
       };
       let rm = self.module_graph.resolve_module(options);
       if let Some(m) = rm {
-        println!("add_export {:?} {:?}", src, m.with_ext().clone());
         return Some(m.with_ext().clone());
       }
       return None;
