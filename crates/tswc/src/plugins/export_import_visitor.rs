@@ -71,9 +71,10 @@ impl<'a> ImportExportVisitor<'a> {
         specifier: spec.clone(),
         ..Default::default()
       };
+      let context = self.module_graph.resolve_context(&self.context);
       let rm = self.module_graph.resolve_module(options);
       if let Some(m) = rm {
-        return Some(m.with_ext().clone());
+        return Some(m.with_ext(&context).clone());
       }
       return None;
     }
@@ -200,9 +201,10 @@ impl<'a> ImportExportVisitor<'a> {
         context: self.context.clone(),
         ..Default::default()
       };
+      let context = self.module_graph.resolve_context(&self.context);
       let rm = self.module_graph.resolve_module(options);
       if let Some(m) = rm {
-        return Some(m.with_ext().clone());
+        return Some(m.with_ext(&context).clone());
       }
       return None;
     }

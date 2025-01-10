@@ -6,21 +6,13 @@ use oxc_resolver::{
 };
 use sugar_path::SugarPath;
 
+use crate::utils::find_up_dir;
+
 #[derive(Default, Debug)]
 pub struct Resolver {
   cjs_resolver: OxcResolver,
   mjs_resolver: OxcResolver,
   options: ResolverOptions,
-}
-
-fn find_up_dir(context: PathBuf) -> Option<String> {
-  if context.is_dir() {
-    context.to_str().map(|f| f.to_string())
-  } else {
-    context
-      .parent()
-      .and_then(|parent| find_up_dir(parent.to_path_buf()))
-  }
 }
 
 #[derive(Debug, Clone)]
@@ -119,6 +111,10 @@ impl Resolver {
       None => false,
       Some(path) => path.contains("node_modules"),
     }
+  }
+  pub fn resolve_context(&self, context: &str) -> Option<String> {
+    let path_str = find_up_dir(PathBuf::from(context));
+    return path_str;
   }
   /// Format Default is CJS
   pub fn resolve(

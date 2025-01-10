@@ -108,15 +108,39 @@ pub struct Module {
 
 impl Module {
   // TODO: support custom ext
-  pub fn with_ext(&self) -> String {
+  pub fn with_ext(&self, context: &str) -> String {
     if self.built_in || self.is_node_modules || self.not_found {
       return self.src.clone();
     }
+    let v_relative_path = self.relative(context);
     if !self.is_script {
-      return self.v_relative_path.clone();
+      return v_relative_path.clone().unwrap_or_default();
     }
-    let path = self.v_relative_path.as_path().with_extension("js");
-    path.to_str().map(|f| f.to_string()).unwrap()
+    let path = v_relative_path.map(|f| {
+      let path_str = f
+        .as_path()
+        .with_extension("js")
+        .to_str()
+        .unwrap_or_default()
+        .to_string();
+      path_str
+    });
+    path.unwrap_or_default()
+  }
+  pub fn relative(&self, context: &str) -> Option<String> {
+    let v_relative_path = {
+      let relative_path = self.v_abs_path.as_path().relative(context.as_path());
+      let relative_path = relative_path.to_str();
+      relative_path.map(|f| {
+        if f.starts_with(".") {
+          f.to_string()
+        } else {
+          format!("./{}", f)
+        }
+      })
+    };
+
+    v_relative_path
   }
 }
 
@@ -278,6 +302,15 @@ impl ModuleGraph {
     }
     return None;
   }
+  pub fn resolve_context(&self, context: &str) -> String {
+    let dir = self.resolver.resolve_context(context).unwrap_or_default();
+    let v_context = replace_common_prefix(
+      &dir.as_path(),
+      &self.config.resolved_options.input.as_path(),
+      &self.config.resolved_options.output.as_path(),
+    );
+    v_context
+  }
   /// Resolved module added into self.modules
   pub fn resolve_module(&mut self, options: ResolveModuleOptions) -> Option<&mut Module> {
     let ResolveModuleOptions {
@@ -307,7 +340,7 @@ impl ModuleGraph {
             &self.config.resolved_options.input.as_path(),
             &self.config.resolved_options.output.as_path(),
           );
-          let relative_path = resolved.relative_path;
+          // let relative_path = resolved.relative_path;
           let context = resolved.context;
           let v_context = context.clone().and_then(|f| {
             Some(replace_common_prefix(
@@ -316,19 +349,19 @@ impl ModuleGraph {
               &self.config.resolved_options.output.as_path(),
             ))
           });
-          let v_relative_path = {
-            let relative_path = v_abs_path
-              .as_path()
-              .relative(v_context.clone().unwrap_or_default().as_path());
-            let relative_path = relative_path.to_str();
-            relative_path.map(|f| {
-              if f.starts_with(".") {
-                f.to_string()
-              } else {
-                format!("./{}", f)
-              }
-            })
-          };
+          // let v_relative_path = {
+          //   let relative_path = v_abs_path
+          //     .as_path()
+          //     .relative(v_context.clone().unwrap_or_default().as_path());
+          //   let relative_path = relative_path.to_str();
+          //   relative_path.map(|f| {
+          //     if f.starts_with(".") {
+          //       f.to_string()
+          //     } else {
+          //       format!("./{}", f)
+          //     }
+          //   })
+          // };
           let is_script = SCRIPT_RE.is_match(&abs_path);
           debug!(
             target: "tswc",
@@ -337,12 +370,12 @@ impl ModuleGraph {
           );
           let m = Module {
             src,
-            context: context.unwrap_or_default(),
+            // context: context.unwrap_or_default(),
             is_script,
             abs_path: abs_path.clone(),
             v_abs_path: v_abs_path.into(),
-            relative_path: relative_path.unwrap_or_default(),
-            v_relative_path: v_relative_path.unwrap_or_default(),
+            // relative_path: relative_path.unwrap_or_default(),
+            // v_relative_path: v_relative_path.unwrap_or_default(),
             // TODO: maybe renamed to skip compile
             used: resolved.built_in || resolved.is_node_modules || resolved.not_found,
             is_node_modules: resolved.is_node_modules,
