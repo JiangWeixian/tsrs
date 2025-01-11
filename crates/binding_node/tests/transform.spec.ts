@@ -11,11 +11,11 @@ import { transform } from '../index.js'
 
 expect.extend({ toMatchDir })
 
-describe('optimize', () => {
-  it('barrel', async () => {
+describe('transform', () => {
+  it('base', async () => {
     const root = path.join(__dirname, '../../../fixtures/package-a')
-    transform({ root, barrelPackages: ['@mui/material'] })
+    transform({ root, barrelPackages: [] })
     // TODO: replace root with placeholder
-    // expect(path.join(root, 'dist')).toMatchDir()
+    expect(path.join(root, 'dist')).toMatchDir()
   })
 })
