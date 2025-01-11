@@ -18,9 +18,6 @@ pub struct Resolver {
 #[derive(Debug, Clone)]
 pub struct ResolvedSpecifier {
   pub abs_path: Option<String>,
-  // TODO: remove this one
-  pub relative_path: Option<String>,
-  pub context: Option<String>,
   pub is_node_modules: bool,
   pub built_in: bool,
   pub not_found: bool,
@@ -123,7 +120,7 @@ impl Resolver {
     context: &str,
     format: Option<Format>,
   ) -> Option<ResolvedSpecifier> {
-    let path_str = find_up_dir(PathBuf::from(context));
+    let path_str = self.resolve_context(context);
     let format = format.unwrap_or(Format::CJS);
     let resolver = match format {
       Format::CJS => &self.cjs_resolver,
@@ -141,8 +138,6 @@ impl Resolver {
       return Some(ResolvedSpecifier {
         is_node_modules: true,
         abs_path: None,
-        relative_path: None,
-        context: path_str,
         built_in: false,
         not_found: false,
       });
@@ -165,8 +160,6 @@ impl Resolver {
             built_in = true;
             return Some(ResolvedSpecifier {
               abs_path: Some(spec),
-              relative_path: None,
-              context: None,
               built_in,
               is_node_modules: false,
               not_found: false,
@@ -181,8 +174,6 @@ impl Resolver {
             );
             return Some(ResolvedSpecifier {
               abs_path: None,
-              relative_path: None,
-              context: None,
               built_in: false,
               is_node_modules: false,
               not_found: true,
@@ -192,24 +183,9 @@ impl Resolver {
       }
       Ok(resolution) => Some(String::from(resolution.full_path().to_str().unwrap())),
     };
-    let relative_path = match &resolved_path {
-      Some(resolved_path) => {
-        // FIXME: sugar path will remove ./file -> file
-        // how to handle this
-        if specifier.starts_with('.') {
-          Some(specifier.to_string())
-        } else {
-          let relative_path = resolved_path.as_path().relative(path);
-          relative_path.to_str().map(|f| f.to_string())
-        }
-      }
-      None => None,
-    };
     Some(ResolvedSpecifier {
       is_node_modules: self.is_node_modules(&resolved_path),
       abs_path: resolved_path,
-      relative_path,
-      context: path_str,
       built_in,
       not_found: false,
     })
