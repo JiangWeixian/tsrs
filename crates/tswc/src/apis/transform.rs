@@ -28,10 +28,6 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
     });
   }
   while mg.get_wildcard_modules_size() != 0 {
-    println!(
-      "mg.get_wildcard_modules_size() {}",
-      mg.get_wildcard_modules_size()
-    );
     let paths_to_compile: Vec<_> = {
       let unused_modules = mg.get_wildcard_modules();
       unused_modules
@@ -56,6 +52,12 @@ pub fn pre_optimize(options: PreOptimizeOptions) {
 }
 
 #[napi(object)]
+pub struct TransformOptimizeOptions {
+  /// Optimized packages
+  pub barrel_packages: Option<Vec<String>>,
+}
+
+#[napi(object)]
 pub struct TransformOptions {
   pub root: String,
   // override tsconfig outDir
@@ -65,8 +67,8 @@ pub struct TransformOptions {
   pub exclude: Option<Vec<String>>,
   // TODO: should nested in resolve config
   pub modules: Option<Vec<String>>,
-  /// Optimized packages
-  pub barrel_packages: Vec<String>,
+  /// Optimized options
+  pub optimize: TransformOptimizeOptions,
 }
 
 pub fn transform(options: TransformOptions) {
@@ -78,8 +80,9 @@ pub fn transform(options: TransformOptions) {
     externals,
     exclude,
     modules,
-    barrel_packages,
+    optimize,
   } = options;
+  let TransformOptimizeOptions { barrel_packages } = optimize;
   let root_cloned = root.clone();
   let root = root.as_path().absolutize();
   let tsconfig_path = root.join("tsconfig.json");
@@ -93,7 +96,7 @@ pub fn transform(options: TransformOptions) {
     root,
     output,
     exclude,
-    barrel_packages: barrel_packages.clone(),
+    barrel_packages: barrel_packages.clone().unwrap_or_default(),
   };
   let mut config = Config::new(config_options);
   config.resolve_options(&tsconfig_path);
@@ -103,7 +106,7 @@ pub fn transform(options: TransformOptions) {
   debug!(target: "tswc", "files {:?}", files);
   pre_optimize(PreOptimizeOptions {
     root: root_cloned,
-    barrel_packages,
+    barrel_packages: barrel_packages.unwrap_or_default(),
     mg: &mut mg,
   });
   for path in files {
