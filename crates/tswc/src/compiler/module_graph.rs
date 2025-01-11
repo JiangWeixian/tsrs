@@ -72,8 +72,6 @@ pub struct ResolveModuleOptions {
 pub struct Module {
   /// The imported named of the module
   pub src: String,
-  /// The dir of current importee file
-  pub context: String,
   /// is current module is compiled
   pub used: bool,
   /// Builtin node native modules
@@ -89,13 +87,8 @@ pub struct Module {
   pub is_entry: bool,
   /// Resolved absolute filepath of src
   pub abs_path: String,
-  /// Relative path relative to abs_path
-  #[allow(dead_code)]
-  pub relative_path: String,
   /// Virtual absolute filepath, rewrite abs_path based on output.dir
   pub v_abs_path: String,
-  /// Relative path relative to v_abs_path
-  pub v_relative_path: String,
   /// is current module is optimized
   pub optimized: bool,
   /// see defines in barrel_visitor
@@ -108,15 +101,39 @@ pub struct Module {
 
 impl Module {
   // TODO: support custom ext
-  pub fn with_ext(&self) -> Option<String> {
+  pub fn with_ext(&self, context: &str) -> String {
     if self.built_in || self.is_node_modules || self.not_found {
-      return Some(self.src.clone());
+      return self.src.clone();
     }
+    let v_relative_path = self.relative(context);
     if !self.is_script {
-      return Some(self.v_relative_path.clone());
+      return v_relative_path.clone().unwrap_or_default();
     }
-    let path = self.v_relative_path.as_path().with_extension("js");
-    path.to_str().map(|f| f.to_string())
+    let path = v_relative_path.map(|f| {
+      let path_str = f
+        .as_path()
+        .with_extension("js")
+        .to_str()
+        .unwrap_or_default()
+        .to_string();
+      path_str
+    });
+    path.unwrap_or_default()
+  }
+  pub fn relative(&self, context: &str) -> Option<String> {
+    let v_relative_path = {
+      let relative_path = self.v_abs_path.as_path().relative(context.as_path());
+      let relative_path = relative_path.to_str();
+      relative_path.map(|f| {
+        if f.starts_with(".") {
+          f.to_string()
+        } else {
+          format!("./{}", f)
+        }
+      })
+    };
+
+    v_relative_path
   }
 }
 
@@ -144,6 +161,8 @@ impl ModuleGraph {
     } else {
       self.modules.get_mut(abs_path)
     }
+    // self.modules.insert(abs_path.into(), module);
+    // self.modules.get_mut(abs_path)
   }
   // Set exported info from optimized packages. e.g barrel_packages
   pub fn set_exports_info(
@@ -247,12 +266,7 @@ impl ModuleGraph {
     }
   }
   pub fn get_module(&mut self, options: ResolveModuleOptions) -> Option<&Module> {
-    let ResolveModuleOptions {
-      src,
-      context,
-      specifier,
-      ..
-    } = options;
+    let ResolveModuleOptions { src, specifier, .. } = options;
     if let Some(src) = src.clone() {
       // is barrel optimize
       if self.config.resolved_options.barrel_packages.contains(&src) {
@@ -265,11 +279,18 @@ impl ModuleGraph {
             }
           }
         }
-      } else {
-        return self.get_module_by_src_and_context(&src, &context);
       }
     }
     return None;
+  }
+  pub fn resolve_context(&self, context: &str) -> String {
+    let dir = self.resolver.resolve_context(context).unwrap_or_default();
+    let v_context = replace_common_prefix(
+      &dir.as_path(),
+      &self.config.resolved_options.input.as_path(),
+      &self.config.resolved_options.output.as_path(),
+    );
+    v_context
   }
   /// Resolved module added into self.modules
   pub fn resolve_module(&mut self, options: ResolveModuleOptions) -> Option<&mut Module> {
@@ -300,28 +321,6 @@ impl ModuleGraph {
             &self.config.resolved_options.input.as_path(),
             &self.config.resolved_options.output.as_path(),
           );
-          let relative_path = resolved.relative_path;
-          let context = resolved.context;
-          let v_context = context.clone().and_then(|f| {
-            Some(replace_common_prefix(
-              &f.as_path(),
-              &self.config.resolved_options.input.as_path(),
-              &self.config.resolved_options.output.as_path(),
-            ))
-          });
-          let v_relative_path = {
-            let relative_path = v_abs_path
-              .as_path()
-              .relative(v_context.clone().unwrap_or_default().as_path());
-            let relative_path = relative_path.to_str();
-            relative_path.map(|f| {
-              if f.starts_with(".") {
-                f.to_string()
-              } else {
-                format!("./{}", f)
-              }
-            })
-          };
           let is_script = SCRIPT_RE.is_match(&abs_path);
           debug!(
             target: "tswc",
@@ -330,12 +329,9 @@ impl ModuleGraph {
           );
           let m = Module {
             src,
-            context: context.unwrap_or_default(),
             is_script,
             abs_path: abs_path.clone(),
             v_abs_path: v_abs_path.into(),
-            relative_path: relative_path.unwrap_or_default(),
-            v_relative_path: v_relative_path.unwrap_or_default(),
             // TODO: maybe renamed to skip compile
             used: resolved.built_in || resolved.is_node_modules || resolved.not_found,
             is_node_modules: resolved.is_node_modules,
@@ -355,12 +351,6 @@ impl ModuleGraph {
     } else {
       None
     }
-  }
-  pub fn get_module_by_src_and_context(&self, src: &str, context: &str) -> Option<&Module> {
-    self
-      .modules
-      .values()
-      .find(|m| m.src == src && m.context == context)
   }
   pub fn get_module_by_src(&self, src: &str) -> Option<&Module> {
     self.modules.values().find(|m| m.src == src)
