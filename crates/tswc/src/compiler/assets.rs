@@ -11,10 +11,7 @@ impl Assets {
     Self {}
   }
   pub fn output(&self, output_path: &str, output: TransformOutput) {
-    let path = output_path
-      .as_path()
-      .with_extension("")
-      .with_extension("js");
+    let path = output_path.as_path().with_extension("js");
     if let Some(parent) = path.parent() {
       create_dir_all(parent).expect("Failed to create directories");
     }
@@ -26,6 +23,11 @@ impl Assets {
     if let Some(parent) = path.parent() {
       create_dir_all(parent).expect("Failed to create directories");
     }
-    copy(src, output_path).expect(&format!("Failed to copy file from {}", src));
+    match copy(src, output_path) {
+      Ok(_) => {}
+      Err(_) => {
+        println!("Failed to copy file from {}", src);
+      }
+    }
   }
 }
