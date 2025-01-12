@@ -72,6 +72,7 @@ pub struct TransformOptions {
 }
 
 pub fn transform(options: TransformOptions) {
+  print!("xx");
   env_logger::init();
   let assets = Assets::new();
   let TransformOptions {
