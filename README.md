@@ -1,22 +1,7 @@
 # tswc
 
-## MVP
+A fast `tsc` successor based on `rust` + `swc`. respect `tsconfig.json` file.
 
-- [x] napi
-- [ ] barrel
-  - [x] split barrel packages import into series
-  - [ ] resolve from pre optimize mg first
+> [!WARNING]  
+> This project is abandoned. **REASON:** `typescript` team will rewrite `tsc` based on `go` language. see [typescript-go](https://github.com/microsoft/typescript-go). 
 
-## Bugs
-
-- [x] should keep original file name like `*.module.scss` `*.svg`, etc... Currently, tswc will remove it and replace with `.js`
-
-## Options
-
-### `root`
-
-### `output`
-
-### `exclude`
-
-### `optimize.barrelPackages`
